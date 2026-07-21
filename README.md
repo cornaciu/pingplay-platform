@@ -14,7 +14,7 @@
 
 ![GitHub](https://img.shields.io/github/license/shadcnstudio/shadcn-nextjs-admincn-admin-template-free) ![GitHub issues](https://img.shields.io/github/issues/shadcnstudio/shadcn-nextjs-admincn-admin-template-free) ![GitHub closed issues](https://img.shields.io/github/issues-closed/shadcnstudio/shadcn-nextjs-admincn-admin-template-free) ![Twitter Follow](https://img.shields.io/twitter/follow/ShadcnStudio?style=social)
 
-<kbd>[![AdminCN Free - Demo Screenshot](https://cdn.shadcnstudio.com/ss-assets/landing-page/template-page/admin-dashboard/applications/admincn-free/readme-image.png)](https://shadcn-nextjs-admincn-admin-template-free.vercel.app/dashboard/orders)</kbd>
+<kbd>[![AdminCN Free - Demo Screenshot](https://cdn.shadcnstudio.com/ss-assets/landing-page/admin-dashboard-page/admin-dashboard-detail-page/admincn-free/readme-image.png)](https://shadcn-nextjs-admincn-admin-template-free.vercel.app/dashboard/orders)</kbd>
 
 ## Introduction 📊
 
