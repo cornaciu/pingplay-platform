@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils'
 import './globals.css'
 import ScrollToTop from '@/components/layout/ScrollToTop'
 
-import UpgradeProButton from '@/components/layout/UpgradePro'
+import DownloadButton from '@/components/layout/Download'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -77,7 +77,7 @@ const RootLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
 
         <ScrollToTop />
 
-        <UpgradeProButton />
+        <DownloadButton />
       </body>
     </html>
   )

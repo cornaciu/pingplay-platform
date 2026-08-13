@@ -4,16 +4,16 @@ import Link from 'next/link'
 // Component Imports
 import { Button } from '@/components/ui/button'
 
-const BuyNowButton = () => {
+const DownloadButton = () => {
   return (
     <Button
-      render={<Link href='https://shadcnstudio.com/#pricing' target='_blank' />}
+      render={<Link href='https://shadcnstudio.com/templates/admin-dashboard/admincn-free' target='_blank' />}
       className='animate-heartbeat fixed right-15 bottom-8 z-50'
       nativeButton={false}
     >
-      Upgrade to Pro
+      Download
     </Button>
   )
 }
 
-export default BuyNowButton
+export default DownloadButton
