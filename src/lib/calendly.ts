@@ -21,6 +21,7 @@ type CalendlyUserResponse = {
 }
 
 type CalendlyInvitee = {
+  uri?: string
   name?: string
   email?: string
   rescheduled?: boolean
@@ -255,6 +256,7 @@ export const getCalendlyFutureBookings = async (eventType: string) => {
         const client = invitees[0]
 
         return {
+          eventUri: event.uri,
           startTime: event.start_time,
           endTime: event.end_time,
           eventTypeUri: event.event_type,

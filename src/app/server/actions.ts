@@ -6,6 +6,8 @@
 
 import crypto from 'node:crypto'
 
+import { revalidatePath } from 'next/cache'
+
 // Data Imports
 import { db as calendarDb } from '@/fake-db/apps/calendar'
 import { db as userProfileDb } from '@/fake-db/pages/user-profile'
@@ -23,6 +25,28 @@ type TableAction = 'open' | 'close'
 type LightsAndTvAction = 'on' | 'off'
 type AirConditionerAction = 'on' | 'off'
 type DoorAction = 'unlock' | 'lock'
+
+export type ReservationSlot = {
+  time: string
+  start_time?: string
+  end_time?: string
+  scheduling_url?: string
+}
+
+export type ReservationAvailability = {
+  date: string
+  slots: ReservationSlot[]
+}
+
+export type ReservationDetails = {
+  eventTypeUri: string
+  eventTypeName: string
+  startTime: string
+  name: string
+  email: string
+  phone: string
+  consentAccepted: boolean
+}
 
 type NukiDoorStatus = 'locked' | 'unlocked' | 'unknown'
 export type NukiDoorInfo = {
@@ -58,6 +82,11 @@ const NUKI_SMARTLOCK_ID = process.env.NUKI_SMARTLOCK_ID
 const NUKI_API_TOKEN = process.env.NUKI_API_TOKEN
 const NUKI_CONFIRMATION_ATTEMPTS = 15
 const NUKI_CONFIRMATION_DELAY_MS = 1500
+const N8N_AVAILABLE_URL = process.env.N8N_AVAILABLE_URL ?? 'https://n8n-wf.pingplay.ro/webhook/calendly/available'
+const CALENDLY_API_URL = 'https://api.calendly.com'
+const CALENDLY_ACCESS_TOKEN = process.env.CALENDLY_ACCESS_TOKEN
+
+const RESERVATION_TIMEZONE = 'Europe/Bucharest'
 
 const createTuyaSignature = (
   clientId: string,
@@ -110,6 +139,252 @@ export const controlTable = async (table: TableControl, action: TableAction) => 
   if (!response.ok) throw new Error(`Webhook returned ${response.status}`)
 
   return { success: true }
+}
+
+export const getReservationAvailability = async (eventTypeUri: string, date: string) => {
+  const url = new URL(N8N_AVAILABLE_URL)
+
+  url.searchParams.set('event_type_uri', eventTypeUri)
+  url.searchParams.set('start', date)
+  url.searchParams.set('days', '1')
+  url.searchParams.set('tz', RESERVATION_TIMEZONE)
+
+  const response = await fetch(url, { cache: 'no-store' })
+  const responseText = await response.text()
+  let data: { days?: ReservationAvailability[]; error?: string } = {}
+
+  if (responseText.trim()) {
+    try {
+      data = JSON.parse(responseText) as { days?: ReservationAvailability[]; error?: string }
+    } catch {
+      throw new Error(`Răspuns invalid de la serviciul de disponibilitate (${response.status})`)
+    }
+  }
+
+  if (!response.ok) throw new Error(data.error || `Nu s-au putut încărca sloturile (${response.status})`)
+  if (!responseText.trim()) throw new Error('Serviciul de disponibilitate a returnat un răspuns gol')
+
+  const selectedDay = data.days?.find(day => day.date === date)
+
+  return selectedDay ?? { date, slots: [] }
+}
+
+export const createReservation = async ({
+  eventTypeUri,
+  startTime,
+  name,
+  email,
+  phone,
+  consentAccepted
+}: ReservationDetails) => {
+  if (!CALENDLY_ACCESS_TOKEN) throw new Error('Lipsește tokenul API Calendly')
+  if (!consentAccepted) throw new Error('Trebuie să accepți regulamentul și politica de confidențialitate')
+
+  const eventTypeResponse = await fetch(eventTypeUri, {
+    headers: { Authorization: `Bearer ${CALENDLY_ACCESS_TOKEN}` },
+    cache: 'no-store'
+  })
+
+  if (!eventTypeResponse.ok) throw new Error(`Event type-ul Calendly nu a putut fi încărcat (${eventTypeResponse.status})`)
+
+  const eventTypeData = (await eventTypeResponse.json()) as {
+    resource?: {
+      custom_questions?: Array<{
+        name?: string
+        type?: string
+        required?: boolean
+        answer_choices?: string[]
+      }>
+    }
+  }
+
+  const configuredQuestions = eventTypeData.resource?.custom_questions ?? []
+  const inviteeEmail = '123@email.com'
+  const reservationEmail = email.trim()
+  const phoneQuestion = configuredQuestions.find(question => question.type === 'phone_number')
+
+  const consentQuestion = configuredQuestions.find(
+    question => question.type === 'single_select' && question.answer_choices?.includes('Accept')
+  )
+
+  const emailQuestion = configuredQuestions.find(question => {
+    const questionName = question.name?.trim().toLowerCase() ?? ''
+
+    return question.type === 'string' && (questionName.includes('email') || questionName.includes('e-mail'))
+  })
+
+  const questionsAndAnswers = [
+    { answer: phone.trim(), position: 0, question: phoneQuestion?.name?.trim() ?? '' },
+    { answer: consentAccepted ? 'Accept' : '', position: 1, question: consentQuestion?.name?.trim() ?? '' },
+    { answer: reservationEmail, position: 2, question: emailQuestion?.name?.trim() ?? '' }
+  ]
+
+  const missingQuestion = questionsAndAnswers.find(question => !question.question || !question.answer)
+
+  if (missingQuestion) {
+    throw new Error('Nu au putut fi completate toate întrebările obligatorii din Calendly')
+  }
+
+  const requestBody: {
+    event_type: string
+    start_time: string
+    invitee: {
+      name: string
+      email: string
+      timezone: string
+    }
+    questions_and_answers: Array<{ answer: string; position: number; question: string }>
+    location: { kind: 'physical'; location: string }
+  } = {
+    event_type: eventTypeUri,
+    start_time: startTime,
+    invitee: {
+      name,
+      email: inviteeEmail,
+      timezone: RESERVATION_TIMEZONE
+    },
+    questions_and_answers: questionsAndAnswers,
+    location: {
+      kind: 'physical',
+      location: 'Strada Dreptatea nr.18, Timișoara'
+    }
+  }
+
+  const response = await fetch(`${CALENDLY_API_URL}/invitees`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${CALENDLY_ACCESS_TOKEN}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(requestBody),
+    cache: 'no-store'
+  })
+
+  const responseText = await response.text()
+  let data: { message?: string; details?: string; resource?: { uri?: string } } = {}
+
+  if (responseText.trim()) {
+    try {
+      data = JSON.parse(responseText) as { message?: string; details?: string; resource?: { uri?: string } }
+    } catch {
+      console.error('[Calendly] Reservation returned a non-JSON response', {
+        status: response.status,
+        statusText: response.statusText,
+        response: responseText.slice(0, 4000)
+      })
+
+      throw new Error(`Răspuns invalid de la API-ul Calendly (${response.status})`)
+    }
+  }
+
+  if (!response.ok) {
+    const formatAnswerForLog = (answer: string, position: number) => {
+      if (position === 0) return answer.replace(/.(?=.{2})/g, '*')
+
+      if (position === 2) {
+        const [localPart, domain] = answer.split('@')
+
+        return domain ? `${localPart?.slice(0, 2) ?? ''}***@${domain}` : '***'
+      }
+
+      return answer
+    }
+
+    console.error('[Calendly] Reservation failed', {
+      status: response.status,
+      statusText: response.statusText,
+      response: data,
+      eventTypeUri,
+      startTime,
+      configuredQuestions: configuredQuestions.map(question => ({
+        name: question.name,
+        type: question.type,
+        required: question.required,
+        answerChoices: question.answer_choices
+      })),
+      requestBody: {
+        event_type: requestBody.event_type,
+        start_time: requestBody.start_time,
+        invitee: {
+          name: requestBody.invitee.name,
+          email: requestBody.invitee.email,
+          timezone: requestBody.invitee.timezone
+        },
+        questions_and_answers: requestBody.questions_and_answers
+      },
+      payloadQuestions: questionsAndAnswers.map((question, position) => ({
+        question: question.question,
+        answer: formatAnswerForLog(question.answer, position),
+        answerLength: question.answer.length,
+        answerType: typeof question.answer,
+        position
+      }))
+    })
+
+    throw new Error(data.message || data.details || `Rezervarea nu a putut fi creată (${response.status})`)
+  }
+
+  if (!responseText.trim() || !data.resource?.uri) {
+    throw new Error('API-ul Calendly nu a confirmat crearea rezervării')
+  }
+
+  return { paymentUrl: null, calendlyUri: data.resource.uri }
+}
+
+export const cancelCalendlyReservation = async (formData: FormData) => {
+  if (!CALENDLY_ACCESS_TOKEN) throw new Error('Lipsește tokenul API Calendly')
+
+  const eventUri = formData.get('eventUri')
+
+  console.error('[Calendly] Cancellation request', {
+    formDataKeys: Array.from(formData.keys()),
+    eventUri: typeof eventUri === 'string' ? eventUri : null
+  })
+
+  const isCalendlyEventUri =
+    typeof eventUri === 'string' &&
+    (() => {
+      try {
+        const url = new URL(eventUri)
+
+        return url.origin === CALENDLY_API_URL && /\/scheduled_events\/[^/]+$/.test(url.pathname)
+      } catch {
+        return false
+      }
+    })()
+
+  if (!isCalendlyEventUri) {
+    throw new Error('Rezervarea nu are un eveniment Calendly valid')
+  }
+
+  const response = await fetch(`${eventUri}/cancellation`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${CALENDLY_ACCESS_TOKEN}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ reason: 'Anulată din dashboard-ul PingPlay' }),
+    cache: 'no-store'
+  })
+
+  if (!response.ok) {
+    const responseText = await response.text()
+    let message = `Rezervarea nu a putut fi anulată (${response.status})`
+
+    if (responseText.trim()) {
+      try {
+        const data = JSON.parse(responseText) as { message?: string; details?: string }
+
+        message = data.message || data.details || message
+      } catch {
+        // Keep the stable fallback for non-JSON Calendly responses.
+      }
+    }
+
+    throw new Error(message)
+  }
+
+  revalidatePath('/dashboard/rezervari')
 }
 
 export const controlLightsAndTv = async (action: LightsAndTvAction) => {

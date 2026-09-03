@@ -1,11 +1,13 @@
 import { CalendarClockIcon, CalendarDaysIcon, MailIcon, PhoneIcon, ShapesIcon, TagIcon } from 'lucide-react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { cancelCalendlyReservation } from '@/app/server/actions'
 import { getCalendlyBookingsLast30Days, getCalendlyCurrentBookings, getCalendlyFutureBookings } from '@/lib/calendly'
 import { getStripeRevenueLast30Days } from '@/lib/stripe'
 
 import SalesMetricsCard from '@/views/dashboards/charts/chart-sales-metrics'
-import CameraMonitorCard from '@/views/dashboards/rezervari/camera-monitor-card'
+import CreateReservationCard from '@/views/dashboards/rezervari/create-reservation-card'
 import TableAvailabilityPanel from '@/views/dashboards/rezervari/table-availability-panel'
 import StatisticsCard from '@/views/dashboards/statistics/statistics-card-01'
 
@@ -132,6 +134,14 @@ const OrdersDashboard = async () => {
                                 {reservation.clientPhone}
                               </span>
                             )}
+                            {reservation.eventUri && (
+                              <form action={cancelCalendlyReservation} className='mt-2'>
+                                <input type='hidden' name='eventUri' value={reservation.eventUri} />
+                                <Button type='submit' variant='destructive' size='sm' className='w-full'>
+                                  Anulează
+                                </Button>
+                              </form>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -194,22 +204,9 @@ const OrdersDashboard = async () => {
 
       <TableAvailabilityPanel />
 
-      <SalesMetricsCard revenueStats={stripeRevenueStats} className='col-span-full w-full' />
+      <CreateReservationCard />
 
-      <CameraMonitorCard
-        streams={[
-          {
-            name: 'Camera 1',
-            url: process.env.NEXT_PUBLIC_CAMERA_1_STREAM_URL,
-            rtspConfigured: Boolean(process.env.CAMERA_1_RTSP_URL)
-          },
-          {
-            name: 'Camera 2',
-            url: process.env.NEXT_PUBLIC_CAMERA_2_STREAM_URL,
-            rtspConfigured: Boolean(process.env.CAMERA_2_RTSP_URL)
-          }
-        ]}
-      />
+      <SalesMetricsCard revenueStats={stripeRevenueStats} className='col-span-full w-full' />
     </div>
   )
 }
