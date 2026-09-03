@@ -65,7 +65,7 @@ const OrdersDashboard = async () => {
     .sort((first, second) => new Date(first.startTime).getTime() - new Date(second.startTime).getTime())
 
   return (
-    <div className='grid grid-cols-2 gap-6 lg:grid-cols-3'>
+    <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
       {/* Statistics Cards */}
       <div className='col-span-full grid gap-6 lg:col-span-2'>
         {DASHBOARD_EVENT_TYPES.map(eventType => {
