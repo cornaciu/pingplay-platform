@@ -175,7 +175,7 @@ const TableAvailabilityPanel = () => {
             return (
               <div
                 key={table.key}
-                className='border-border relative flex items-center justify-between gap-3 rounded-md border p-3'
+                className='border-border relative flex flex-col items-stretch gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between'
               >
                 {cooldownTarget === table.key && cooldowns[table.key] > 0 && (
                   <div className='bg-background/90 absolute inset-0 z-10 flex items-center justify-center rounded-md backdrop-blur-sm'>
@@ -192,10 +192,11 @@ const TableAvailabilityPanel = () => {
                   )}
                   <span className='font-medium'>{table.label}</span>
                 </div>
-                <div className='flex shrink-0 gap-2'>
+                <div className='grid w-full gap-2 sm:w-auto sm:grid-cols-2'>
                   <Button
                     variant='destructive'
                     size='sm'
+                    className='w-full'
                     onClick={() => updateTable(table.key, false)}
                     disabled={isPending || cooldowns[table.key] > 0}
                   >
@@ -204,6 +205,7 @@ const TableAvailabilityPanel = () => {
                   <Button
                     variant='outline'
                     size='sm'
+                    className='w-full'
                     onClick={() => updateTable(table.key, true)}
                     disabled={isPending || cooldowns[table.key] > 0}
                   >
@@ -215,7 +217,7 @@ const TableAvailabilityPanel = () => {
           })}
         </div>
 
-        <div className='border-border relative grid grid-cols-2 gap-2 border-t pt-4'>
+        <div className='border-border relative grid gap-2 border-t pt-4 sm:grid-cols-2'>
           {cooldownTarget === 'Ambele' && hasCooldown && (
             <div className='bg-background/90 absolute inset-0 z-10 flex items-center justify-center rounded-md backdrop-blur-sm'>
               <span className='text-muted-foreground text-center text-sm font-medium'>
@@ -237,7 +239,7 @@ const TableAvailabilityPanel = () => {
           </Button>
         </div>
 
-        <div className='border-border grid grid-cols-2 gap-2 border-t pt-4'>
+        <div className='border-border grid gap-2 border-t pt-4 sm:grid-cols-2'>
           <Button variant='outline' onClick={() => updateLightsAndTv('on')} disabled={isLightsAndTvPending}>
             <LightbulbIcon />
             <PowerIcon />
@@ -252,7 +254,7 @@ const TableAvailabilityPanel = () => {
 
         <div className='border-border border-t pt-4'>
           <p className='text-foreground mb-3 text-sm font-semibold'>Control climă</p>
-          <div className='grid grid-cols-2 gap-2'>
+          <div className='grid gap-2 sm:grid-cols-2'>
             <Button
               variant='outline'
               className='border-emerald-600/50 text-emerald-700 hover:bg-emerald-600/10 dark:text-emerald-400'
