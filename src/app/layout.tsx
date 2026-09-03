@@ -32,16 +32,16 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'AdminCN - Free Shadcn Admin Dashboard Template',
+  title: 'PINGPLAY - Dashboard',
   description:
     'Build modern admin dashboards faster with AdminCN Free. A free shadcn admin dashboard template built with Tailwind CSS, featuring responsive layouts and essential pages.',
   metadataBase: new URL(`${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}`),
   openGraph: {
-    title: 'AdminCN - Free Shadcn Admin Dashboard Template',
+    title: 'PINGPLAY - Dashboard',
     description:
       'Build modern admin dashboards faster with AdminCN Free. A free shadcn admin dashboard template built with Tailwind CSS, featuring responsive layouts and essential pages.',
     type: 'website',
-    siteName: 'AdminCN',
+    siteName: 'PINGPLAY',
     url: process.env.NEXT_PUBLIC_APP_URL,
     images: [
       {

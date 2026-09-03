@@ -38,21 +38,22 @@ const formatBookingDate = (date: string) =>
 // Transaction table data
 
 const OrdersDashboard = async () => {
-  const bookingStats = await getCalendlyBookingsLast30Days(DASHBOARD_EVENT_TYPES.map(eventType => eventType.value))
-
-  const futureBookings = await Promise.all(
-    DASHBOARD_EVENT_TYPES.map(async eventType => ({
-      eventType: eventType.value,
-      bookings: await getCalendlyFutureBookings(eventType.value)
-    }))
-  )
-
-  const currentBookings = await Promise.all(
-    DASHBOARD_EVENT_TYPES.map(async eventType => ({
-      eventType: eventType.value,
-      bookings: await getCalendlyCurrentBookings(eventType.value)
-    }))
-  )
+  const [bookingStats, futureBookings, currentBookings, stripeRevenueStats] = await Promise.all([
+    getCalendlyBookingsLast30Days(DASHBOARD_EVENT_TYPES.map(eventType => eventType.value)),
+    Promise.all(
+      DASHBOARD_EVENT_TYPES.map(async eventType => ({
+        eventType: eventType.value,
+        bookings: await getCalendlyFutureBookings(eventType.value)
+      }))
+    ),
+    Promise.all(
+      DASHBOARD_EVENT_TYPES.map(async eventType => ({
+        eventType: eventType.value,
+        bookings: await getCalendlyCurrentBookings(eventType.value)
+      }))
+    ),
+    getStripeRevenueLast30Days()
+  ])
 
   const currentReservations = currentBookings
     .flatMap(({ eventType, bookings }) =>
@@ -62,8 +63,6 @@ const OrdersDashboard = async () => {
       }))
     )
     .sort((first, second) => new Date(first.startTime).getTime() - new Date(second.startTime).getTime())
-
-  const stripeRevenueStats = await getStripeRevenueLast30Days()
 
   return (
     <div className='grid grid-cols-2 gap-6 lg:grid-cols-3'>

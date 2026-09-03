@@ -1,6 +1,6 @@
 const themeConfig = {
-  templateName: 'AdminCN',
-  homePageUrl: '/dashboard/orders'
+  templateName: 'PINGPLAY',
+  homePageUrl: '/dashboard/rezervari'
 } as const
 
 export default themeConfig

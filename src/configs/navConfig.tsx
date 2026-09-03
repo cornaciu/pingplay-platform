@@ -48,9 +48,9 @@ export const navItems: NavItem[] = [
     groupLabel: 'Dashboard & Layouts',
     items: [
       {
-        icon: 'Package',
-        label: 'Orders',
-        href: '/dashboard/orders'
+        icon: 'CalendarCheck',
+        label: 'Rezervari',
+        href: '/dashboard/rezervari'
       },
       {
         icon: 'TrendingUp',

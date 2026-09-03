@@ -179,6 +179,10 @@ AdminCN Free is built with Next.js, Shadcn UI, and Tailwind CSS, offering a prod
    pnpm install
    ```
 
+### Calendly bookings
+
+The Orders dashboard reads the number of active Calendly bookings from the last 30 days for each local event type. Copy `.env.example` to `.env.local`, add a Calendly personal access token, and map each local event type key to its Calendly event type UUID or URI in `CALENDLY_EVENT_TYPE_IDS`.
+
 2. **Start the development server:**
 
    ```bash

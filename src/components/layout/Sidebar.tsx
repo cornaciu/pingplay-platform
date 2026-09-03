@@ -523,7 +523,7 @@ const SidebarLayout = () => {
               <LogoSvg className='[&_rect]:fill-sidebar [&_rect:first-child]:fill-primary' />
               <div className='flex flex-col items-start'>
                 <span className='text-lg font-semibold text-nowrap'>{themeConfig.templateName}</span>
-                <span className='text-xs font-light text-nowrap'>Dashboard Template</span>
+                <span className='text-xs font-light text-nowrap'>Dashboard</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>

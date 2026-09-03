@@ -58,17 +58,14 @@ const Header = () => {
           {/* GitHub Button */}
           <div className='pt-2 max-md:hidden'>
             <a
-              className='github-button'
+              className='text-muted-foreground hover:text-foreground inline-flex items-center rounded-md px-2 py-1 text-sm font-medium transition-colors'
               href='https://github.com/shadcnstudio/shadcn-nextjs-admincn-admin-template-free'
-              data-icon='octicon-star'
-              data-size='large'
-              data-show-count='true'
-              aria-label='Star shadcnstudio/shadcn-studio on GitHub'
+              target='_blank'
+              rel='noreferrer'
             >
-              Star
+              GitHub
             </a>
           </div>
-          <script async defer src='https://buttons.github.io/buttons.js'></script>
           <ModeToggle />
           <LanguageDropdown
             trigger={
