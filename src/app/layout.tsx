@@ -19,8 +19,6 @@ import { cn } from '@/lib/utils'
 import './globals.css'
 import ScrollToTop from '@/components/layout/ScrollToTop'
 
-import DownloadButton from '@/components/layout/Download'
-
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin']
@@ -77,8 +75,6 @@ const RootLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
         </NuqsAdapter>
 
         <ScrollToTop />
-
-        <DownloadButton />
       </body>
     </html>
   )

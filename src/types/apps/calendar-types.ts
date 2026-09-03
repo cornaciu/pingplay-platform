@@ -11,7 +11,7 @@ export interface CalendarEvent {
   location?: string
 }
 
-export type events = 'family' | 'business' | 'personal' | 'holiday' | 'etc'
+export type events = 'family' | 'business' | 'personal' | 'holiday' | 'etc' | 'masa2' | 'ambele'
 
 /** @deprecated Use `events` — kept for existing imports */
 export type EventColor = events

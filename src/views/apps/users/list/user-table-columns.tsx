@@ -41,7 +41,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 // Config Imports
-import { getInitialsFromName } from '@/configs/mailConfig'
+import { getInitialsFromName } from '@/lib/utils'
 
 // Util Imports
 import { cn } from '@/lib/utils'

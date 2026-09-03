@@ -5,6 +5,7 @@ import { getCalendlyBookingsLast30Days, getCalendlyCurrentBookings, getCalendlyF
 import { getStripeRevenueLast30Days } from '@/lib/stripe'
 
 import SalesMetricsCard from '@/views/dashboards/charts/chart-sales-metrics'
+import CameraMonitorCard from '@/views/dashboards/rezervari/camera-monitor-card'
 import TableAvailabilityPanel from '@/views/dashboards/rezervari/table-availability-panel'
 import StatisticsCard from '@/views/dashboards/statistics/statistics-card-01'
 
@@ -194,6 +195,21 @@ const OrdersDashboard = async () => {
       <TableAvailabilityPanel />
 
       <SalesMetricsCard revenueStats={stripeRevenueStats} className='col-span-full w-full' />
+
+      <CameraMonitorCard
+        streams={[
+          {
+            name: 'Camera 1',
+            url: process.env.NEXT_PUBLIC_CAMERA_1_STREAM_URL,
+            rtspConfigured: Boolean(process.env.CAMERA_1_RTSP_URL)
+          },
+          {
+            name: 'Camera 2',
+            url: process.env.NEXT_PUBLIC_CAMERA_2_STREAM_URL,
+            rtspConfigured: Boolean(process.env.CAMERA_2_RTSP_URL)
+          }
+        ]}
+      />
     </div>
   )
 }

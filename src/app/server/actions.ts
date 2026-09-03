@@ -8,17 +8,11 @@ import crypto from 'node:crypto'
 
 // Data Imports
 import { db as calendarDb } from '@/fake-db/apps/calendar'
-import { db as mailDb } from '@/fake-db/apps/mail'
 import { db as userProfileDb } from '@/fake-db/pages/user-profile'
 
 // Calendar App Actions
 export const getCalendarData = async () => {
   return calendarDb
-}
-
-// Mail App Actions
-export const getMailData = async () => {
-  return mailDb
 }
 
 // User Profile Actions

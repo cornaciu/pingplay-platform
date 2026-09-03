@@ -43,7 +43,7 @@ export type NavItem = {
   items: MenuItem[]
 }
 
-export const navItems: NavItem[] = [
+const allNavItems: NavItem[] = [
   {
     groupLabel: 'Dashboard & Layouts',
     items: [
@@ -154,11 +154,6 @@ export const navItems: NavItem[] = [
   {
     groupLabel: 'Apps',
     items: [
-      {
-        icon: 'MailIcon',
-        label: 'Mail',
-        href: '/apps/mail'
-      },
       {
         icon: 'CalendarIcon',
         label: 'Calendar',
@@ -423,48 +418,6 @@ export const navItems: NavItem[] = [
         ]
       },
       {
-        icon: 'BugIcon',
-        label: 'Error Pages',
-        childItems: [
-          { label: 'Error Page', href: '/pages/misc/error-page', target: '_blank' },
-          {
-            label: 'Error Page - 404',
-            href: 'https://shadcn-nextjs-admincn-admin-template.vercel.app/pages/misc/error-page-404',
-            target: '_blank',
-            badge: 'Pro',
-            badgeClassName: 'right-8'
-          },
-          {
-            label: 'Not Authorized - 401',
-            href: 'https://shadcn-nextjs-admincn-admin-template.vercel.app/pages/misc/unauthorized-access-401',
-            target: '_blank',
-            badge: 'Pro',
-            badgeClassName: 'right-8'
-          },
-          {
-            label: 'Forbidden - 403',
-            href: 'https://shadcn-nextjs-admincn-admin-template.vercel.app/pages/misc/forbidden-403',
-            target: '_blank',
-            badge: 'Pro',
-            badgeClassName: 'right-8'
-          },
-          {
-            label: 'Server Error - 500',
-            href: 'https://shadcn-nextjs-admincn-admin-template.vercel.app/pages/misc/server-error-500',
-            target: '_blank',
-            badge: 'Pro',
-            badgeClassName: 'right-8'
-          },
-          {
-            label: 'Under Maintenance',
-            href: 'https://shadcn-nextjs-admincn-admin-template.vercel.app/pages/misc/maintenance-page',
-            target: '_blank',
-            badge: 'Pro',
-            badgeClassName: 'right-8'
-          }
-        ]
-      },
-      {
         icon: 'RocketIcon',
         label: 'Landing Page',
         href: 'https://shadcn-nextjs-flow-landing-page.vercel.app/',
@@ -530,26 +483,6 @@ export const navItems: NavItem[] = [
     groupLabel: 'Forms & Tables',
     items: [
       {
-        icon: 'LayoutTemplateIcon',
-        label: 'Form Layouts',
-        childItems: [
-          { label: 'Vertical Layout', href: '/forms/form-layouts/vertical' },
-          { label: 'Horizontal Layout', href: '/forms/form-layouts/horizontal' },
-          {
-            label: 'Sticky Actions',
-            href: 'https://shadcn-nextjs-admincn-admin-template.vercel.app/forms/form-layouts/sticky-actions',
-            target: '_blank',
-            badge: 'Pro',
-            badgeClassName: 'right-8'
-          }
-        ]
-      },
-      {
-        icon: 'BadgeCheckIcon',
-        label: 'Form Validation',
-        href: '/forms/form-validation'
-      },
-      {
         icon: 'TableIcon',
         label: 'Data Table',
         href: '/datatable'
@@ -573,73 +506,31 @@ export const navItems: NavItem[] = [
         ]
       }
     ]
-  },
-  {
-    groupLabel: 'Components & Charts',
-    items: [
-      {
-        icon: 'LayoutGrid',
-        label: 'Components',
-        href: 'https://shadcnstudio.com/components',
-        target: '_blank'
-      },
-      {
-        icon: 'LineChart',
-        label: 'Charts',
-        href: 'https://shadcnstudio.com/blocks/dashboard-and-application/charts-component',
-        target: '_blank'
-      },
-      {
-        icon: 'ChartNoAxesColumnIncreasing',
-        label: 'Statistics',
-        href: 'https://shadcnstudio.com/blocks/dashboard-and-application/statistics-component',
-        target: '_blank'
-      },
-      {
-        icon: 'PanelTop',
-        label: 'Card Nav',
-        href: 'https://shadcnstudio.com/blocks/dashboard-and-application/card-nav',
-        target: '_blank',
-        badge: 'Pro',
-        badgeClassName: 'right-8'
-      },
-      {
-        icon: 'Puzzle',
-        label: 'Widgets',
-        href: 'https://shadcnstudio.com/blocks/dashboard-and-application/widgets-component',
-        target: '_blank'
-      }
-    ]
-  },
-  {
-    groupLabel: 'Miscellaneous',
-    items: [
-      {
-        icon: 'MenuIcon',
-        label: 'Menu Level',
-        childItems: [
-          {
-            label: 'Menu Item ',
-            href: '#'
-          },
-          {
-            label: 'Menu Level 1',
-            childItems: [{ label: 'Menu Level 2', href: '#' }]
-          }
-        ]
-      },
-      {
-        icon: 'InfoIcon',
-        label: 'Support',
-        href: 'https://shadcnstudio.com/support',
-        target: '_blank'
-      },
-      {
-        icon: 'BookOpenTextIcon',
-        label: 'Documentation',
-        href: 'https://shadcnstudio.com/docs/documentation-admin/getting-started',
-        target: '_blank'
-      }
-    ]
   }
 ]
+
+const removeProItems = (items: MenuSubItem[]): MenuSubItem[] => {
+  return items.flatMap(item => {
+    if (item.badge === 'Pro') return []
+
+    if ('childItems' in item) {
+      const childItems = item.childItems.flatMap(childItem => {
+        if ('childItems' in childItem) {
+          const nestedItems = removeProItems(childItem.childItems)
+
+          return nestedItems.length > 0 ? [{ ...childItem, childItems: nestedItems }] : []
+        }
+
+        return childItem.badge === 'Pro' ? [] : [childItem]
+      })
+
+      return childItems.length > 0 ? [{ ...item, childItems }] : []
+    }
+
+    return [item]
+  })
+}
+
+export const navItems: NavItem[] = allNavItems
+  .map(navGroup => ({ ...navGroup, items: removeProItems(navGroup.items) }))
+  .filter(navGroup => navGroup.items.length > 0)

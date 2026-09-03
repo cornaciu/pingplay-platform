@@ -7,7 +7,7 @@ import type { CalendarEvent, events } from '@/types/apps/calendar-types'
 // Util Imports
 import { cn } from '@/lib/utils'
 
-const EVENT_TYPES: events[] = ['etc', 'family', 'business', 'personal', 'holiday']
+const EVENT_TYPES: events[] = ['etc', 'family', 'business', 'personal', 'holiday', 'masa2', 'ambele']
 
 const LEGACY_COLOR_TO_EVENT_TYPE: Record<string, events> = {
   amber: 'family',
@@ -36,6 +36,10 @@ export function getEventColorClasses(color?: string): string {
   const eventType = normalizeEventType(color)
 
   switch (eventType) {
+    case 'ambele':
+      return 'bg-[#fbd75b] text-[#1d1d1d] shadow-[#fbd75b]/20'
+    case 'masa2':
+      return 'bg-[#bd7575] text-[#1d1d1d] shadow-[#bd7575]/20'
     case 'family':
       return 'bg-amber-200/50 text-amber-950/80 dark:bg-amber-400/25 dark:text-amber-200 shadow-amber-700/8'
     case 'business':
