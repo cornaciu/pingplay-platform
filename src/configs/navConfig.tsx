@@ -43,6 +43,9 @@ export type NavItem = {
   items: MenuItem[]
 }
 
+const hasChildItems = (item: MenuItem): item is Extract<MenuItem, { childItems: MenuSubItem[] }> =>
+  Array.isArray(item.childItems)
+
 const allNavItems: NavItem[] = [
   {
     groupLabel: 'Dashboard & Layouts',
@@ -509,26 +512,34 @@ const allNavItems: NavItem[] = [
   }
 ]
 
-const removeProItems = (items: MenuSubItem[]): MenuSubItem[] => {
-  return items.flatMap(item => {
-    if (item.badge === 'Pro') return []
-
+const removeProSubItems = (items: MenuSubItem[]): MenuSubItem[] => {
+  return items.reduce<MenuSubItem[]>((filteredItems, item) => {
     if ('childItems' in item) {
-      const childItems = item.childItems.flatMap(childItem => {
-        if ('childItems' in childItem) {
-          const nestedItems = removeProItems(childItem.childItems)
+      const childItems = item.childItems.filter(childItem => childItem.badge !== 'Pro')
 
-          return nestedItems.length > 0 ? [{ ...childItem, childItems: nestedItems }] : []
-        }
-
-        return childItem.badge === 'Pro' ? [] : [childItem]
-      })
-
-      return childItems.length > 0 ? [{ ...item, childItems }] : []
+      if (childItems.length > 0) filteredItems.push({ ...item, childItems })
+    } else if (item.badge !== 'Pro') {
+      filteredItems.push(item)
     }
 
-    return [item]
-  })
+    return filteredItems
+  }, [])
+}
+
+const removeProItems = (items: MenuItem[]): MenuItem[] => {
+  return items.reduce<MenuItem[]>((filteredItems, item) => {
+    if (item.badge === 'Pro') return filteredItems
+
+    if (hasChildItems(item)) {
+      const childItems = removeProSubItems(item.childItems)
+
+      if (childItems.length > 0) filteredItems.push({ ...item, childItems })
+    } else {
+      filteredItems.push(item)
+    }
+
+    return filteredItems
+  }, [])
 }
 
 export const navItems: NavItem[] = allNavItems

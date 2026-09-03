@@ -57,7 +57,7 @@ export const getGoogleCalendarEvents = async (): Promise<CalendarEvent[]> => {
     return unfoldedIcs
       .split('BEGIN:VEVENT')
       .slice(1)
-      .map(eventBlock => {
+      .map((eventBlock): CalendarEvent | null => {
         const event = eventBlock.split('END:VEVENT')[0]
         const startValue = getProperty(event, 'DTSTART')
         const endValue = getProperty(event, 'DTEND')

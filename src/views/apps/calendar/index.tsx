@@ -1,6 +1,6 @@
 'use client'
 
-import type { CalendarView } from '@/types/apps/calendar-types'
+import type { CalendarEvent, CalendarView } from '@/types/apps/calendar-types'
 
 // React Imports
 import { useEffect, useMemo, useState } from 'react'
