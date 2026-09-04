@@ -9,22 +9,10 @@ import Link from 'next/link'
 // Third-party Imports
 import type { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
-import {
-  BrushIcon,
-  CrownIcon,
-  EllipsisVerticalIcon,
-  EyeIcon,
-  PencilIcon,
-  PencilLineIcon,
-  PencilRulerIcon,
-  Trash2Icon,
-  UserCheckIcon,
-  UserRoundIcon,
-  UserXIcon
-} from 'lucide-react'
+import { EllipsisVerticalIcon, EyeIcon, PencilIcon, Trash2Icon, UserCheckIcon, UserXIcon } from 'lucide-react'
 
 // Type Imports
-import type { AppUser, UserBilling, UserRole, UserStatus } from '@/types/apps/user-types'
+import type { AppUser, UserBilling, UserStatus } from '@/types/apps/user-types'
 
 // Component Imports
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'

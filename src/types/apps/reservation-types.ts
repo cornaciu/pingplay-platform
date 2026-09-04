@@ -1,0 +1,32 @@
+export type ReservationRecord = {
+  id: string
+  Numele_clientului: string
+  Masa_de_joc_durata: string
+  ID_Rezervare: string
+  Cod_acces_folosit: string
+  Ora_de_inceput_a_rezervarii: string
+  Ora_de_sfarsit_a_rezervarii: string
+  Numar_telefon: string
+  Email: string
+  Factura: string
+  Status_plata: string
+  Link_reprogramare: string
+  Link_anulare: string
+  Event_UUID: string
+  Rezervarea_creata_pe_data_de: string
+  Event_type: string
+  Status_calendly: string
+  Motiv_anulare_reprogramare: string
+  Anulata_pe_data_de_: string
+  Link_plata: string
+  ID_Plata_stripe: string
+  Invitee_UUID: string
+  Old_Invitee: string
+  New_invitee: string
+  Event_type_short: string
+  Stripe_Payment_link_ID: string
+  Delta_timp_reprogramare_: string
+  mail_recenzie_trimis: string
+  createdAt: string
+  updatedAt: string
+}

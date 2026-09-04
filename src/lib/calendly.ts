@@ -39,6 +39,19 @@ type BookingStats = {
   canceled: number | null
 }
 
+export type CalendlyReservation = {
+  id: string
+  eventUri: string
+  startTime: string
+  endTime: string
+  eventTypeUri: string
+  clientName: string | null
+  clientEmail: string | null
+  clientPhone: string | null
+  status: 'active' | 'canceled'
+  rescheduled: boolean
+}
+
 const CALENDLY_API_URL = 'https://api.calendly.com'
 const DAYS_IN_MILLISECONDS = 30 * 24 * 60 * 60 * 1000
 const CURRENT_EVENTS_LOOKBACK_IN_MILLISECONDS = 24 * 60 * 60 * 1000
@@ -323,5 +336,51 @@ export const getCalendlyCurrentBookings = async (eventType: string) => {
     return { count: reservations.length, reservations }
   } catch {
     return null
+  }
+}
+
+export const getCalendlyReservations = async (): Promise<CalendlyReservation[]> => {
+  const accessToken = process.env.CALENDLY_ACCESS_TOKEN
+  const eventTypeUris = new Set(Object.values(getEventTypeIds()).flat().map(toEventTypeUri))
+
+  if (!accessToken || eventTypeUris.size === 0) return []
+
+  try {
+    const organization = await getCalendlyOrganization()
+    const now = new Date()
+    const minStartTime = new Date(now.getTime() - DAYS_IN_MILLISECONDS)
+    const maxStartTime = new Date(now.getTime() + FUTURE_EVENTS_IN_MILLISECONDS)
+
+    const [activeEvents, canceledEvents] = await Promise.all([
+      getScheduledEvents(organization, minStartTime.toISOString(), maxStartTime.toISOString(), 'active'),
+      getScheduledEvents(organization, minStartTime.toISOString(), now.toISOString(), 'canceled')
+    ])
+
+    const events = [
+      ...activeEvents.filter(event => eventTypeUris.has(event.event_type)),
+      ...canceledEvents.filter(event => eventTypeUris.has(event.event_type))
+    ]
+
+    return Promise.all(
+      events.map(async event => {
+        const invitees = await getEventInvitees(event.uri)
+        const client = invitees[0]
+
+        return {
+          id: event.uri,
+          eventUri: event.uri,
+          startTime: event.start_time,
+          endTime: event.end_time,
+          eventTypeUri: event.event_type,
+          clientName: client?.name ?? null,
+          clientEmail: getInviteeAnswerAtPosition(client ?? {}, 2) ?? client?.email ?? null,
+          clientPhone: getInviteeAnswerAtPosition(client ?? {}, 0),
+          status: canceledEvents.some(canceledEvent => canceledEvent.uri === event.uri) ? 'canceled' : 'active',
+          rescheduled: client?.rescheduled === true
+        }
+      })
+    )
+  } catch {
+    return []
   }
 }

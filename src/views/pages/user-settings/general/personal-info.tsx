@@ -35,7 +35,7 @@ const countries = [
   },
   {
     value: 'romania',
-    label: 'Romania',
+    label: 'România',
     flag: '/images/flags/romania.webp'
   },
   {
@@ -45,17 +45,17 @@ const countries = [
   },
   {
     value: 'iraq',
-    label: 'Iraq',
+    label: 'Irak',
     flag: '/images/flags/iraq.webp'
   },
   {
     value: 'syria',
-    label: 'Syria',
+    label: 'Siria',
     flag: '/images/flags/syria.webp'
   },
   {
     value: 'korea',
-    label: 'Korea',
+    label: 'Coreea',
     flag: '/images/flags/korea.webp'
   },
   {
@@ -93,14 +93,14 @@ const PersonalInfo = () => {
     if (!f) return
 
     if (!f.type.startsWith('image/')) {
-      window.alert('Please select an image file')
+      window.alert('Selectează un fișier imagine')
       e.currentTarget.value = ''
 
       return
     }
 
     if (f.size > 1024 * 1024) {
-      window.alert('File must be smaller than 1MB')
+      window.alert('Fișierul trebuie să fie mai mic de 1 MB')
       e.currentTarget.value = ''
 
       return
@@ -118,22 +118,22 @@ const PersonalInfo = () => {
 
   return (
     <div className='grid grid-cols-1 gap-10 lg:grid-cols-3'>
-      {/* Vertical Tabs List */}
+      {/* Lista taburilor verticale */}
       <div className='flex flex-col space-y-1'>
-        <h3 className='text-base font-semibold'>Personal Information</h3>
-        <p className='text-muted-foreground text-sm'>Manage your personal information and role.</p>
+        <h3 className='text-base font-semibold'>Informații personale</h3>
+        <p className='text-muted-foreground text-sm'>Gestionează informațiile personale și rolul tău.</p>
       </div>
 
-      {/* Content */}
+      {/* Conținut */}
       <div className='space-y-6 lg:col-span-2'>
         <form className='mx-auto'>
           <div className='mb-6 w-full space-y-2'>
-            <Label>Your Avatar</Label>
+            <Label>Avatarul tău</Label>
             <div className='flex items-center gap-4'>
               <div
                 role='button'
                 tabIndex={0}
-                aria-label='Upload your avatar'
+                aria-label='Încarcă avatarul tău'
                 onClick={openPicker}
                 onKeyDown={e => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -144,7 +144,7 @@ const PersonalInfo = () => {
                 className='flex h-20 w-20 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-dashed hover:opacity-95'
               >
                 {preview ? (
-                  <img src={preview} alt='avatar preview' className='h-full w-full object-cover' />
+                  <img src={preview} alt='Previzualizare avatar' className='h-full w-full object-cover' />
                 ) : (
                   <ImageIcon />
                 )}
@@ -154,43 +154,43 @@ const PersonalInfo = () => {
                 <input ref={inputRef} type='file' accept='image/*' className='hidden' onChange={onSelect} />
                 <Button type='button' variant='outline' onClick={openPicker} className='flex items-center gap-2'>
                   <UploadCloudIcon />
-                  Upload avatar
+                  Încarcă avatarul
                 </Button>
                 <Button type='button' variant='ghost' onClick={remove} disabled={!file} className='text-destructive!'>
                   <Trash2Icon />
                 </Button>
               </div>
             </div>
-            <p className='text-muted-foreground text-sm'>Pick a photo up to 1MB.</p>
+            <p className='text-muted-foreground text-sm'>Alege o fotografie de cel mult 1 MB.</p>
           </div>
           <div className='grid grid-cols-1 gap-6 sm:grid-cols-2'>
             <div className='flex flex-col items-start gap-2'>
-              <Label htmlFor='multi-step-personal-info-first-name'>First Name</Label>
-              <Input id='multi-step-personal-info-first-name' placeholder='John' />
+              <Label htmlFor='multi-step-personal-info-first-name'>Prenume</Label>
+              <Input id='multi-step-personal-info-first-name' placeholder='Ion' />
             </div>
             <div className='flex flex-col items-start gap-2'>
-              <Label htmlFor='multi-step-personal-info-last-name'>Last Name</Label>
-              <Input id='multi-step-personal-info-last-name' placeholder='Doe' />
+              <Label htmlFor='multi-step-personal-info-last-name'>Nume</Label>
+              <Input id='multi-step-personal-info-last-name' placeholder='Popescu' />
             </div>
             <div className='flex flex-col items-start gap-2'>
-              <Label htmlFor='multi-step-personal-info-mobile'>Mobile</Label>
-              <Input id='multi-step-personal-info-mobile' type='tel' placeholder='+1 (555) 123-4567' />
+              <Label htmlFor='multi-step-personal-info-mobile'>Telefon</Label>
+              <Input id='multi-step-personal-info-mobile' type='tel' placeholder='+40 700 000 000' />
             </div>
             <div className='flex flex-col items-start gap-2'>
-              <Label htmlFor='country'>Country</Label>
+              <Label htmlFor='country'>Țară</Label>
               <Select defaultValue='1' required items={countries}>
                 <SelectTrigger id='country' className='w-full'>
-                  <SelectValue placeholder='Select Country'>
+                  <SelectValue placeholder='Selectează țara'>
                     {(value: string) => {
                       const country = countries.find(c => c.value === value)
 
                       return country ? (
                         <span className='flex items-center gap-2'>
-                          <img src={country.flag} alt={`${country.label} flag`} className='h-4 w-5 shrink-0' />
+                          <img src={country.flag} alt={`Steagul țării ${country.label}`} className='h-4 w-5 shrink-0' />
                           <span className='truncate'>{country.label}</span>
                         </span>
                       ) : (
-                        <span>Select Country</span>
+                        <span>Selectează țara</span>
                       )
                     }}
                   </SelectValue>
@@ -199,7 +199,7 @@ const PersonalInfo = () => {
                   <SelectGroup>
                     {countries.map(country => (
                       <SelectItem key={country.value} value={country.value}>
-                        <img src={country.flag} alt={`${country.label} flag`} className='h-4 w-5' />{' '}
+                        <img src={country.flag} alt={`Steagul țării ${country.label}`} className='h-4 w-5' />{' '}
                         <span className='truncate'>{country.label}</span>
                       </SelectItem>
                     ))}
@@ -209,32 +209,32 @@ const PersonalInfo = () => {
             </div>
 
             <div className='space-y-2'>
-              <Label htmlFor='gender'>Gender</Label>
+              <Label htmlFor='gender'>Gen</Label>
               <Select>
                 <SelectTrigger id='gender' className='w-full'>
-                  <SelectValue placeholder='Select a gender' />
+                  <SelectValue placeholder='Selectează genul' />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value='male'>Male</SelectItem>
-                    <SelectItem value='female'>Female</SelectItem>
-                    <SelectItem value='other'>Other</SelectItem>
+                    <SelectItem value='male'>Masculin</SelectItem>
+                    <SelectItem value='female'>Feminin</SelectItem>
+                    <SelectItem value='other'>Altul</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
             </div>
 
             <div className='space-y-2'>
-              <Label htmlFor='role'>Role</Label>
+              <Label htmlFor='role'>Rol</Label>
               <Select>
                 <SelectTrigger id='role' className='w-full'>
-                  <SelectValue placeholder='Select a role' />
+                  <SelectValue placeholder='Selectează rolul' />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value='admin'>Admin</SelectItem>
-                    <SelectItem value='user'>User</SelectItem>
-                    <SelectItem value='other'>Other</SelectItem>
+                    <SelectItem value='admin'>Administrator</SelectItem>
+                    <SelectItem value='user'>Utilizator</SelectItem>
+                    <SelectItem value='other'>Altul</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -243,7 +243,7 @@ const PersonalInfo = () => {
         </form>
         <div className='flex justify-end'>
           <Button type='submit' className='max-sm:w-full'>
-            Save Changes
+            Salvează modificările
           </Button>
         </div>
       </div>

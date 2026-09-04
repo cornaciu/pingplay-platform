@@ -364,7 +364,7 @@ export const cancelCalendlyReservation = async (formData: FormData) => {
       Authorization: `Bearer ${CALENDLY_ACCESS_TOKEN}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ reason: 'Anulată din dashboard-ul PingPlay' }),
+    body: JSON.stringify({ reason: 'Anulată din dashboard-ul PINGPLAY' }),
     cache: 'no-store'
   })
 

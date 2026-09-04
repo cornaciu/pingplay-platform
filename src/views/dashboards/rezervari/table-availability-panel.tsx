@@ -193,15 +193,6 @@ const TableAvailabilityPanel = () => {
                 </div>
                 <div className='grid w-full gap-2 sm:w-auto sm:grid-cols-2'>
                   <Button
-                    variant='destructive'
-                    size='sm'
-                    className='w-full'
-                    onClick={() => updateTable(table.key, false)}
-                    disabled={isPending || cooldowns[table.key] > 0}
-                  >
-                    Închide
-                  </Button>
-                  <Button
                     variant='outline'
                     size='sm'
                     className='w-full border-emerald-600/50 text-emerald-700 hover:bg-emerald-600/10 dark:text-emerald-400'
@@ -209,6 +200,15 @@ const TableAvailabilityPanel = () => {
                     disabled={isPending || cooldowns[table.key] > 0}
                   >
                     Deschide
+                  </Button>
+                  <Button
+                    variant='destructive'
+                    size='sm'
+                    className='w-full'
+                    onClick={() => updateTable(table.key, false)}
+                    disabled={isPending || cooldowns[table.key] > 0}
+                  >
+                    Închide
                   </Button>
                 </div>
               </div>

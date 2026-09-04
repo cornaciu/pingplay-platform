@@ -60,6 +60,11 @@ const allNavItems: NavItem[] = [
     groupLabel: '',
     items: [
       {
+        icon: 'CalendarCheck2',
+        label: 'Rezervări',
+        href: '/apps/reservations'
+      },
+      {
         icon: 'CalendarIcon',
         label: 'Calendar',
         href: '/apps/calendar'
@@ -71,26 +76,17 @@ const allNavItems: NavItem[] = [
           { label: 'List', href: '/apps/users/list' },
           { label: 'View', href: '/apps/users/view' }
         ]
+      },
+      {
+        icon: 'UserCogIcon',
+        label: 'Setări cont',
+        href: '/pages/user-settings?setting=general'
       }
     ]
   },
   {
     groupLabel: '',
     items: [
-      {
-        icon: 'UserCogIcon',
-        label: 'User Settings',
-        childItems: [
-          {
-            label: 'General',
-            href: '/pages/user-settings?setting=general'
-          },
-          {
-            label: 'Workspace',
-            href: '/pages/user-settings?setting=workspace'
-          }
-        ]
-      },
       {
         icon: 'UserIcon',
         label: 'User Profile',

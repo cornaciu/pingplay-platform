@@ -119,6 +119,7 @@ export const getStripeRevenueLast30Days = async (): Promise<StripeRevenueStats> 
 
     const lastRevenueDate = formatDateInTimeZone(now)
     const firstRevenueDateKey = addDaysToDateKey(lastRevenueDate, -(REVENUE_DAYS - 1))
+
     const dailyRevenue = Array.from({ length: REVENUE_DAYS }, (_, index) => {
       const formattedDate = addDaysToDateKey(firstRevenueDateKey, index)
 

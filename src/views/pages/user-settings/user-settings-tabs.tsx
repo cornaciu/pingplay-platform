@@ -9,18 +9,12 @@ import { parseAsString, useQueryState } from 'nuqs'
 // Component Imports
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import UserGeneral from '@/views/pages/user-settings/general'
-import Workspace from '@/views/pages/user-settings/workspace'
 
 const tabs = [
   {
     name: 'General',
     value: 'general',
     content: <UserGeneral />
-  },
-  {
-    name: 'Workspace',
-    value: 'workspace',
-    content: <Workspace />
   }
 ]
 

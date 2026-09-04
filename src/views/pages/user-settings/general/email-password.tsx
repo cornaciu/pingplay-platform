@@ -15,13 +15,13 @@ import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 
 const requirements = [
-  { regex: /.{12,}/, text: 'At least 12 characters' },
-  { regex: /[a-z]/, text: 'At least 1 lowercase letter' },
-  { regex: /[A-Z]/, text: 'At least 1 uppercase letter' },
-  { regex: /[0-9]/, text: 'At least 1 number' },
+  { regex: /.{12,}/, text: 'Cel puțin 12 caractere' },
+  { regex: /[a-z]/, text: 'Cel puțin o literă mică' },
+  { regex: /[A-Z]/, text: 'Cel puțin o literă mare' },
+  { regex: /[0-9]/, text: 'Cel puțin o cifră' },
   {
     regex: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/,
-    text: 'At least 1 special character'
+    text: 'Cel puțin un caracter special'
   }
 ]
 
@@ -52,20 +52,20 @@ const EmailPass = () => {
   }
 
   const getText = (score: number) => {
-    if (score === 0) return 'Enter a password'
-    if (score <= 2) return 'Weak password'
-    if (score <= 3) return 'Medium password'
-    if (score === 4) return 'Strong password'
+    if (score === 0) return 'Introdu o parolă'
+    if (score <= 2) return 'Parolă slabă'
+    if (score <= 3) return 'Parolă medie'
+    if (score === 4) return 'Parolă puternică'
 
-    return 'Very strong password'
+    return 'Parolă foarte puternică'
   }
 
   return (
     <div className='grid grid-cols-1 gap-10 lg:grid-cols-3'>
       {/* Vertical Tabs List */}
       <div className='flex flex-col space-y-1'>
-        <h3 className='text-base font-semibold'>Email & Password</h3>
-        <p className='text-muted-foreground text-sm'>Manage your email and password settings.</p>
+        <h3 className='text-base font-semibold'>Email și parolă</h3>
+        <p className='text-muted-foreground text-sm'>Gestionează setările adresei de email și ale parolei.</p>
       </div>
 
       {/* Content */}
@@ -76,22 +76,22 @@ const EmailPass = () => {
               Email<span className='text-destructive'>*</span>
             </Label>
             <InputGroup>
-              <InputGroupInput id='email' type='email' placeholder='Email address' required />
+              <InputGroupInput id='email' type='email' placeholder='Adresă de email' required />
               <InputGroupAddon align='inline-end' className='pr-2.75'>
                 <MailIcon className='size-4' />
-                <span className='sr-only'>Email</span>
+                <span className='sr-only'>Adresă de email</span>
               </InputGroupAddon>
             </InputGroup>
           </div>
           <div className='w-full space-y-2'>
             <Label htmlFor='current-password' className='gap-1'>
-              Current Password<span className='text-destructive'>*</span>
+              Parola actuală<span className='text-destructive'>*</span>
             </Label>
             <InputGroup>
               <InputGroupInput
                 id='current-password'
                 type={isVisible ? 'text' : 'password'}
-                placeholder='Password'
+                placeholder='Parola actuală'
                 required
               />
               <InputGroupAddon align='inline-end' className='pr-1.5'>
@@ -102,20 +102,20 @@ const EmailPass = () => {
                   className='text-muted-foreground focus-visible:ring-ring/50 rounded-l-none hover:bg-transparent'
                 >
                   {isVisible ? <EyeOffIcon /> : <EyeIcon />}
-                  <span className='sr-only'>{isVisible ? 'Hide password' : 'Show password'}</span>
+                  <span className='sr-only'>{isVisible ? 'Ascunde parola' : 'Afișează parola'}</span>
                 </Button>
               </InputGroupAddon>
             </InputGroup>
           </div>
           <div className='w-full space-y-2'>
             <Label htmlFor='new-password' className='gap-1'>
-              New Password<span className='text-destructive'>*</span>
+              Parolă nouă<span className='text-destructive'>*</span>
             </Label>
             <InputGroup className='mb-3'>
               <InputGroupInput
                 id='new-password'
                 type={isVisible ? 'text' : 'password'}
-                placeholder='Password'
+                placeholder='Parolă nouă'
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
@@ -128,7 +128,7 @@ const EmailPass = () => {
                   className='text-muted-foreground focus-visible:ring-ring/50 rounded-l-none hover:bg-transparent'
                 >
                   {isVisible ? <EyeOffIcon /> : <EyeIcon />}
-                  <span className='sr-only'>{isVisible ? 'Hide password' : 'Show password'}</span>
+                  <span className='sr-only'>{isVisible ? 'Ascunde parola' : 'Afișează parola'}</span>
                 </Button>
               </InputGroupAddon>
             </InputGroup>
@@ -145,7 +145,7 @@ const EmailPass = () => {
               ))}
             </div>
 
-            <p className='text-foreground text-sm font-medium'>{getText(strengthScore)}. Must contain :</p>
+            <p className='text-foreground text-sm font-medium'>{getText(strengthScore)}. Trebuie să conțină:</p>
 
             <ul className='mb-4 space-y-1.5'>
               {strength.map((req, index) => (
@@ -159,7 +159,7 @@ const EmailPass = () => {
                     className={cn('text-xs', req.met ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground')}
                   >
                     {req.text}
-                    <span className='sr-only'>{req.met ? ' - Requirement met' : ' - Requirement not met'}</span>
+                    <span className='sr-only'>{req.met ? ' - Cerință îndeplinită' : ' - Cerință neîndeplinită'}</span>
                   </span>
                 </li>
               ))}
@@ -168,7 +168,7 @@ const EmailPass = () => {
 
           <div className='mt-6 flex justify-end'>
             <Button type='submit' className='max-sm:w-full'>
-              Save Changes
+              Salvează modificările
             </Button>
           </div>
         </form>
