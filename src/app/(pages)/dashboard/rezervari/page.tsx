@@ -246,7 +246,6 @@ const OrdersDashboard = async () => {
         </Card>
       </div>
 
-
       <CreateReservationCard />
 
       <SalesMetricsCard revenueStats={stripeRevenueStats} className='col-span-full w-full' />

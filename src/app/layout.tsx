@@ -31,6 +31,26 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'PINGPLAY - Dashboard',
+  icons: {
+    icon: [
+      {
+        url: '/favicon.png?v=1',
+        type: 'image/png'
+      }
+    ],
+    shortcut: [
+      {
+        url: '/favicon.png?v=1',
+        type: 'image/png'
+      }
+    ],
+    apple: [
+      {
+        url: '/favicon.png?v=1',
+        type: 'image/png'
+      }
+    ]
+  },
   description:
     'Build modern admin dashboards faster with AdminCN Free. A free shadcn admin dashboard template built with Tailwind CSS, featuring responsive layouts and essential pages.',
   metadataBase: new URL(`${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}`),
