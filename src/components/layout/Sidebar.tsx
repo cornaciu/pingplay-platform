@@ -17,8 +17,8 @@ import { ChevronRightIcon, SquareArrowOutUpRightIcon } from 'lucide-react'
 import type { MenuGroupSubItem, MenuItem, MenuLeafSubItem, MenuSubItem, NavItem } from '@/configs/navConfig'
 
 // Component Imports
-import LogoSvg from '@/assets/svg/logo'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import Logo from '@/components/shared/Logo'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,7 +50,6 @@ import {
 
 // Config Imports
 import { navItems } from '@/configs/navConfig'
-import themeConfig from '@/configs/themeConfig'
 
 // Util Imports
 import { cn } from '@/lib/utils'
@@ -477,16 +476,8 @@ const SidebarLayout = () => {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              size='lg'
-              className='gap-2.5 bg-transparent! [&>svg]:size-8'
-              render={<Link href={`${themeConfig.homePageUrl}`} />}
-            >
-              <LogoSvg className='[&_rect]:fill-sidebar [&_rect:first-child]:fill-primary' />
-              <div className='flex flex-col items-start'>
-                <span className='text-lg font-semibold text-nowrap'>{themeConfig.templateName}</span>
-                <span className='text-xs font-light text-nowrap'>Dashboard</span>
-              </div>
+            <SidebarMenuButton size='lg' className='bg-transparent! [&_img]:h-10'>
+              <Logo />
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

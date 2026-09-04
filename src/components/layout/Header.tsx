@@ -5,11 +5,7 @@ import { Fragment } from 'react'
 
 import { usePathname } from 'next/navigation'
 
-// Third-party Imports
-import { LanguagesIcon } from 'lucide-react'
-
 // Component Imports
-import LanguageDropdown from '@/components/shared/LanguageDropdown'
 import ModeToggle from '@/components/layout/ModeToggle'
 import ProfileDropdown from '@/components/shared/ProfileDropdown'
 import {
@@ -20,11 +16,17 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator
 } from '@/components/ui/breadcrumb'
-import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 
-const Header = () => {
+type HeaderUser = {
+  fullName: string
+  email: string
+  imageUrl: string
+  initials: string
+}
+
+const Header = ({ user }: { user: HeaderUser }) => {
   const pathname = usePathname()
 
   const segments = pathname.split('/').filter(Boolean)
@@ -55,26 +57,8 @@ const Header = () => {
           </Breadcrumb>
         </div>
         <div className='flex items-center gap-1.5'>
-          {/* GitHub Button */}
-          <div className='pt-2 max-md:hidden'>
-            <a
-              className='text-muted-foreground hover:text-foreground inline-flex items-center rounded-md px-2 py-1 text-sm font-medium transition-colors'
-              href='https://github.com/shadcnstudio/shadcn-nextjs-admincn-admin-template-free'
-              target='_blank'
-              rel='noreferrer'
-            >
-              GitHub
-            </a>
-          </div>
           <ModeToggle />
-          <LanguageDropdown
-            trigger={
-              <Button variant='ghost' size='icon-lg'>
-                <LanguagesIcon />
-              </Button>
-            }
-          />
-          <ProfileDropdown />
+          <ProfileDropdown user={user} />
         </div>
       </div>
     </header>

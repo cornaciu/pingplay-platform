@@ -1,7 +1,7 @@
 'use client'
 
 // Rect Import
-import { useState } from 'react'
+import { useActionState, useState } from 'react'
 
 // Next Imports
 import Link from 'next/link'
@@ -15,27 +15,35 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
+import { login } from '@/lib/auth'
 
 const LoginForm = () => {
   const [isVisible, setIsVisible] = useState(false)
+  const [error, formAction, isPending] = useActionState(login, null)
 
   return (
-    <form onSubmit={e => e.preventDefault()}>
+    <form action={formAction}>
       <FieldGroup className='gap-4'>
         {/* Email */}
         <Field className='gap-2'>
           <FieldLabel htmlFor='userEmail' className='leading-5'>
-            Email address*
+            Adresă de email*
           </FieldLabel>
-          <Input type='email' id='userEmail' placeholder='Enter your email address' />
+          <Input type='email' id='userEmail' name='email' placeholder='Introdu adresa de email' required />
         </Field>
         {/* Password */}
         <Field className='w-full gap-2'>
           <FieldLabel htmlFor='password' className='leading-5'>
-            Password*
+            Parolă*
           </FieldLabel>
           <InputGroup>
-            <InputGroupInput id='password' type={isVisible ? 'text' : 'password'} placeholder='••••••••••••••••' />
+            <InputGroupInput
+              id='password'
+              name='password'
+              type={isVisible ? 'text' : 'password'}
+              placeholder='••••••••••••••••'
+              required
+            />
             <InputGroupAddon align='inline-end' className='pr-1.5'>
               <Button
                 type='button'
@@ -45,7 +53,7 @@ const LoginForm = () => {
                 className='text-muted-foreground rounded-l-none hover:bg-transparent'
               >
                 {isVisible ? <EyeOffIcon /> : <EyeIcon />}
-                <span className='sr-only'>{isVisible ? 'Hide password' : 'Show password'}</span>
+                <span className='sr-only'>{isVisible ? 'Ascunde parola' : 'Afișează parola'}</span>
               </Button>
             </InputGroupAddon>
           </InputGroup>
@@ -56,16 +64,17 @@ const LoginForm = () => {
             <Checkbox id='rememberMe' />
             <FieldLabel htmlFor='rememberMe' className='text-muted-foreground'>
               {' '}
-              Remember Me
+              Ține-mă minte
             </FieldLabel>
           </Field>
           <Link href='/pages/auth/forgot-password' className='text-base text-nowrap hover:underline'>
-            Forgot Password?
+            Ai uitat parola?
           </Link>
         </div>
+        {error ? <p className='text-destructive text-sm'>{error}</p> : null}
         <Field>
-          <Button className='w-full' type='submit'>
-            Sign in to Shadcn Studio
+          <Button className='w-full' type='submit' disabled={isPending}>
+            {isPending ? 'Se verifică...' : 'Autentificare'}
           </Button>
         </Field>
       </FieldGroup>

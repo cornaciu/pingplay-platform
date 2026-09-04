@@ -34,6 +34,7 @@ type CalendlyInvitee = {
 type BookingStats = {
   eventType: string
   count: number | null
+  previousCount: number | null
   rescheduled: number | null
   canceled: number | null
 }
@@ -155,6 +156,7 @@ export const getCalendlyBookingsLast30Days = async (eventTypes: string[]) => {
       bookings: eventTypes.map<BookingStats>(eventType => ({
         eventType,
         count: null,
+        previousCount: null,
         rescheduled: null,
         canceled: null
       }))
@@ -163,8 +165,7 @@ export const getCalendlyBookingsLast30Days = async (eventTypes: string[]) => {
 
   const maxStartTime = new Date()
   const minStartTime = new Date(maxStartTime.getTime() - DAYS_IN_MILLISECONDS)
-
-  minStartTime.setUTCHours(0, 0, 0, 0)
+  const previousMinStartTime = new Date(minStartTime.getTime() - DAYS_IN_MILLISECONDS)
 
   let organization: string
 
@@ -175,6 +176,7 @@ export const getCalendlyBookingsLast30Days = async (eventTypes: string[]) => {
       bookings: eventTypes.map<BookingStats>(eventType => ({
         eventType,
         count: null,
+        previousCount: null,
         rescheduled: null,
         canceled: null
       }))
@@ -184,15 +186,20 @@ export const getCalendlyBookingsLast30Days = async (eventTypes: string[]) => {
   const eventTypeUris = new Set(Object.values(eventTypeIds).flat().map(toEventTypeUri))
 
   try {
-    const [activeEvents, canceledEvents] = await Promise.all([
+    const [activeEvents, previousActiveEvents, canceledEvents] = await Promise.all([
       getScheduledEvents(organization, minStartTime.toISOString(), maxStartTime.toISOString(), 'active'),
+      getScheduledEvents(organization, previousMinStartTime.toISOString(), minStartTime.toISOString(), 'active'),
       getScheduledEvents(organization, minStartTime.toISOString(), maxStartTime.toISOString(), 'canceled')
     ])
 
     const completedInPeriod = (event: CalendlyScheduledEvent) =>
       new Date(event.end_time) >= minStartTime && new Date(event.end_time) <= maxStartTime
 
+    const completedInPreviousPeriod = (event: CalendlyScheduledEvent) =>
+      new Date(event.end_time) >= previousMinStartTime && new Date(event.end_time) < minStartTime
+
     const completedEvents = activeEvents.filter(completedInPeriod)
+    const previousCompletedEvents = previousActiveEvents.filter(completedInPreviousPeriod)
     const relevantCanceledEvents = canceledEvents.filter(event => eventTypeUris.has(event.event_type))
 
     const rescheduledEvents = await Promise.all(
@@ -205,12 +212,14 @@ export const getCalendlyBookingsLast30Days = async (eventTypes: string[]) => {
       bookings: eventTypes.map(eventType => {
         const configuredUris = new Set((eventTypeIds[eventType] ?? []).map(toEventTypeUri))
         const canceledForEventType = relevantCanceledEvents.filter(event => configuredUris.has(event.event_type))
+        const rescheduledForEventType = canceledForEventType.filter(event => rescheduledEventUris.has(event.uri))
 
         return {
           eventType,
           count: completedEvents.filter(event => configuredUris.has(event.event_type)).length,
-          canceled: canceledForEventType.length,
-          rescheduled: canceledForEventType.filter(event => rescheduledEventUris.has(event.uri)).length
+          previousCount: previousCompletedEvents.filter(event => configuredUris.has(event.event_type)).length,
+          canceled: canceledForEventType.length - rescheduledForEventType.length,
+          rescheduled: rescheduledForEventType.length
         }
       })
     }
@@ -219,6 +228,7 @@ export const getCalendlyBookingsLast30Days = async (eventTypes: string[]) => {
       bookings: eventTypes.map<BookingStats>(eventType => ({
         eventType,
         count: null,
+        previousCount: null,
         rescheduled: null,
         canceled: null
       }))

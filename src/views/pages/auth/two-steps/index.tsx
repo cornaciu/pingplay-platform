@@ -1,6 +1,3 @@
-// Next Imports
-import Link from 'next/link'
-
 // Component Imports
 import Logo from '@/components/shared/Logo'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -18,9 +15,7 @@ const TwoSteps = () => {
 
       <Card className='z-1 w-full gap-6 overflow-clip py-6 sm:max-w-md'>
         <CardHeader className='px-6'>
-          <Link href='/'>
-            <Logo className='gap-3' />
-          </Link>
+          <Logo className='gap-3' />
         </CardHeader>
 
         <CardContent className='space-y-6 px-6'>

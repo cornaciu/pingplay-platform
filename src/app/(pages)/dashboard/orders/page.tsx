@@ -70,16 +70,54 @@ const OrdersDashboard = async () => {
       {/* Statistics Cards */}
       <div className='col-span-full grid gap-6 lg:col-span-2'>
         {DASHBOARD_EVENT_TYPES.map(eventType => {
-          const bookingCount = bookingStats.bookings.find(item => item.eventType === eventType.value)?.count
           const bookingStatsForEventType = bookingStats.bookings.find(item => item.eventType === eventType.value)
+          const bookingCount = bookingStatsForEventType?.count
+          const previousBookingCount = bookingStatsForEventType?.previousCount
+
+          const bookingChangePercent =
+            bookingCount !== null &&
+            bookingCount !== undefined &&
+            previousBookingCount !== null &&
+            previousBookingCount !== undefined
+              ? previousBookingCount === 0
+                ? null
+                : Math.round(((bookingCount - previousBookingCount) / previousBookingCount) * 100)
+              : null
+
           const futureBookingsForEventType = futureBookings.find(item => item.eventType === eventType.value)?.bookings
 
           return (
             <StatisticsCard
               key={eventType.value}
-              icon={<eventType.icon className='size-4' />}
               title={eventType.label}
               value={bookingCount ?? '-'}
+              comparison={
+                <div className='text-right text-xs'>
+                  <span className='text-muted-foreground block'>față de luna trecută</span>
+                  <span
+                    className={
+                      bookingChangePercent === null
+                        ? ''
+                        : bookingChangePercent > 0
+                          ? 'font-semibold text-emerald-600 dark:text-emerald-400'
+                          : bookingChangePercent < 0
+                            ? 'text-destructive font-semibold'
+                            : 'font-semibold'
+                    }
+                  >
+                    {bookingChangePercent === null
+                      ? previousBookingCount === 0 && bookingCount && bookingCount > 0
+                        ? 'rezervări noi'
+                        : '-'
+                      : `${bookingChangePercent > 0 ? '+' : ''}${bookingChangePercent}%`}
+                  </span>
+                </div>
+              }
+              className={
+                eventType.value === 'masa1'
+                  ? 'border-emerald-500/60 bg-emerald-100/70 dark:border-emerald-400/50 dark:bg-emerald-900/40'
+                  : 'border-blue-500/60 bg-blue-100/70 dark:border-blue-400/50 dark:bg-blue-900/40'
+              }
               details={
                 <div className='mt-3 flex flex-col gap-3 text-xs'>
                   <div className='flex flex-wrap gap-2'>
@@ -104,31 +142,31 @@ const OrdersDashboard = async () => {
                       {futureBookingsForEventType?.reservations.map(reservation => (
                         <div
                           key={`${reservation.eventTypeUri}-${reservation.startTime}`}
-                          className='bg-muted/40 border-border/60 grid grid-cols-[minmax(0,1fr)_minmax(150px,auto)] gap-3 rounded-md border px-3 py-2.5'
+                          className='bg-muted/40 border-border/60 grid gap-4 rounded-md border p-4 md:grid-cols-[minmax(0,1fr)_minmax(220px,auto)]'
                         >
                           <div className='min-w-0'>
-                            <span className='text-foreground flex items-center gap-1.5 font-semibold'>
-                              <CalendarDaysIcon className='text-primary size-3.5 shrink-0' />
+                            <span className='text-foreground flex items-start gap-2 text-base leading-6 font-semibold'>
+                              <CalendarDaysIcon className='text-primary mt-0.5 size-4 shrink-0' />
                               {formatBookingDate(reservation.startTime)}
                             </span>
-                            <span className='text-muted-foreground mt-1 flex items-center gap-1 truncate'>
-                              <TagIcon className='size-3 shrink-0' />
+                            <span className='text-muted-foreground mt-2 flex items-start gap-2 text-sm leading-5'>
+                              <TagIcon className='mt-0.5 size-3.5 shrink-0' />
                               {CALENDLY_EVENT_TYPE_LABELS[reservation.eventTypeUri] ?? 'Event type necunoscut'}
                             </span>
                           </div>
-                          <div className='border-border/60 text-right text-xs sm:border-l sm:pl-3'>
-                            <span className='text-foreground block font-semibold'>
+                          <div className='border-border/60 border-t pt-3 text-sm md:border-t-0 md:border-l md:pt-0 md:pl-4'>
+                            <span className='text-foreground block text-base font-semibold'>
                               {reservation.clientName ?? 'Client necunoscut'}
                             </span>
                             {reservation.clientEmail && (
-                              <span className='text-muted-foreground mt-1 flex items-center justify-end gap-1'>
-                                <MailIcon className='size-3 shrink-0' />
-                                <span className='max-w-44 truncate'>{reservation.clientEmail}</span>
+                              <span className='text-muted-foreground mt-2 flex items-start gap-2 text-sm break-all'>
+                                <MailIcon className='mt-0.5 size-3.5 shrink-0' />
+                                <span>{reservation.clientEmail}</span>
                               </span>
                             )}
                             {reservation.clientPhone && (
-                              <span className='text-muted-foreground flex items-center justify-end gap-1'>
-                                <PhoneIcon className='size-3 shrink-0' />
+                              <span className='text-muted-foreground mt-1 flex items-center gap-2 text-sm'>
+                                <PhoneIcon className='size-3.5 shrink-0' />
                                 {reservation.clientPhone}
                               </span>
                             )}

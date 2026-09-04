@@ -29,6 +29,23 @@ export type StripeRevenueStats = {
 
 const STRIPE_API_URL = 'https://api.stripe.com/v1/charges'
 const REVENUE_DAYS = 30
+const REVENUE_TIME_ZONE = 'Europe/Bucharest'
+
+const formatDateInTimeZone = (date: Date) =>
+  new Intl.DateTimeFormat('en-CA', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    timeZone: REVENUE_TIME_ZONE
+  }).format(date)
+
+const addDaysToDateKey = (dateKey: string, days: number) => {
+  const date = new Date(`${dateKey}T12:00:00Z`)
+
+  date.setUTCDate(date.getUTCDate() + days)
+
+  return date.toISOString().slice(0, 10)
+}
 
 export const getStripeRevenueLast30Days = async (): Promise<StripeRevenueStats> => {
   const secretKey = process.env.STRIPE_SECRET_KEY
@@ -47,10 +64,7 @@ export const getStripeRevenueLast30Days = async (): Promise<StripeRevenueStats> 
   if (!secretKey) return emptyStats
 
   const now = new Date()
-  const firstRevenueDate = new Date(now)
-
-  firstRevenueDate.setUTCHours(0, 0, 0, 0)
-  firstRevenueDate.setUTCDate(firstRevenueDate.getUTCDate() - (REVENUE_DAYS - 1))
+  const firstRevenueDate = new Date(now.getTime() - REVENUE_DAYS * 24 * 60 * 60 * 1000)
 
   const nowTimestamp = Math.floor(now.getTime() / 1000)
   const firstRevenueTimestamp = Math.floor(firstRevenueDate.getTime() / 1000)
@@ -96,19 +110,17 @@ export const getStripeRevenueLast30Days = async (): Promise<StripeRevenueStats> 
     const netRevenue = revenue - refunds - fees
 
     const dailyTotals = successfulCharges.reduce<Record<string, number>>((totals, charge) => {
-      const date = new Date(charge.created * 1000).toISOString().slice(0, 10)
+      const date = formatDateInTimeZone(new Date(charge.created * 1000))
 
       totals[date] = (totals[date] ?? 0) + charge.amount
 
       return totals
     }, {})
 
+    const lastRevenueDate = formatDateInTimeZone(now)
+    const firstRevenueDateKey = addDaysToDateKey(lastRevenueDate, -(REVENUE_DAYS - 1))
     const dailyRevenue = Array.from({ length: REVENUE_DAYS }, (_, index) => {
-      const date = new Date(firstRevenueDate)
-
-      date.setUTCDate(firstRevenueDate.getUTCDate() + index)
-
-      const formattedDate = date.toISOString().slice(0, 10)
+      const formattedDate = addDaysToDateKey(firstRevenueDateKey, index)
 
       return { date: formattedDate, amount: dailyTotals[formattedDate] ?? 0 }
     })

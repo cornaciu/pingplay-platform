@@ -107,8 +107,8 @@ const removeIdsFromSelection = (selectedUserIds: string[], ids: string[]): strin
   return selectedUserIds.filter(id => !idSet.has(id))
 }
 
-export function useUserApp() {
-  const [users, setUsers] = useState<AppUser[]>(seedUsers)
+export function useUserApp(initialUsers: AppUser[] = seedUsers) {
+  const [users, setUsers] = useState<AppUser[]>(initialUsers)
   const [filters, setFiltersState] = useState<UserFilters>(DEFAULT_FILTERS)
   const [rowsPerPage, setRowsPerPageState] = useState(DEFAULT_ROWS_PER_PAGE)
   const [currentPage, setCurrentPage] = useState(DEFAULT_CURRENT_PAGE)

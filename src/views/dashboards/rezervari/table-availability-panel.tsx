@@ -1,20 +1,20 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
+
 import { toast } from 'sonner'
 
 import {
   AirVentIcon,
   BatteryMediumIcon,
   CheckCircle2Icon,
-  LightbulbIcon,
   LockKeyholeIcon,
   PowerIcon,
   UnlockKeyholeIcon
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import {
   controlAirConditioner,
   controlDoor,
@@ -159,10 +159,9 @@ const TableAvailabilityPanel = () => {
   return (
     <Card className='h-full w-full lg:col-span-1'>
       <CardHeader>
-        <CardTitle>Control mese</CardTitle>
+        <p className='text-foreground mb-3 text-base font-semibold'>Control mese</p>
       </CardHeader>
-      <CardContent className='flex flex-col gap-4'>
-        <p className='text-muted-foreground text-sm'>Gestionează disponibilitatea meselor.</p>
+      <CardContent className='flex flex-1 flex-col justify-between gap-4 [&_button]:h-12'>
         <div className='flex flex-col gap-2'>
           {(
             [
@@ -205,7 +204,7 @@ const TableAvailabilityPanel = () => {
                   <Button
                     variant='outline'
                     size='sm'
-                    className='w-full'
+                    className='w-full border-emerald-600/50 text-emerald-700 hover:bg-emerald-600/10 dark:text-emerald-400'
                     onClick={() => updateTable(table.key, true)}
                     disabled={isPending || cooldowns[table.key] > 0}
                   >
@@ -226,6 +225,15 @@ const TableAvailabilityPanel = () => {
             </div>
           )}
           <Button
+            variant='outline'
+            className='border-emerald-600/50 text-emerald-700 hover:bg-emerald-600/10 dark:text-emerald-400'
+            onClick={() => updateTable('Ambele', true)}
+            disabled={isPending || hasCooldown}
+          >
+            <CheckCircle2Icon />
+            Deschide ambele mese
+          </Button>
+          <Button
             variant='destructive'
             onClick={() => updateTable('Ambele', false)}
             disabled={isPending || hasCooldown}
@@ -233,27 +241,29 @@ const TableAvailabilityPanel = () => {
             <LockKeyholeIcon />
             Închide ambele mese
           </Button>
-          <Button variant='outline' onClick={() => updateTable('Ambele', true)} disabled={isPending || hasCooldown}>
-            <CheckCircle2Icon />
-            Deschide ambele mese
-          </Button>
-        </div>
-
-        <div className='border-border grid gap-2 border-t pt-4 sm:grid-cols-2'>
-          <Button variant='outline' onClick={() => updateLightsAndTv('on')} disabled={isLightsAndTvPending}>
-            <LightbulbIcon />
-            <PowerIcon />
-            Aprinde lumina și TV
-          </Button>
-          <Button variant='secondary' onClick={() => updateLightsAndTv('off')} disabled={isLightsAndTvPending}>
-            <LightbulbIcon />
-            <PowerIcon />
-            Stinge lumina și TV
-          </Button>
         </div>
 
         <div className='border-border border-t pt-4'>
-          <p className='text-foreground mb-3 text-sm font-semibold'>Control climă</p>
+          <p className='text-foreground mb-3 text-base font-semibold'>Control lumină și TV</p>
+          <div className='grid gap-2 sm:grid-cols-2'>
+            <Button
+              variant='outline'
+              className='border-emerald-600/50 text-emerald-700 hover:bg-emerald-600/10 dark:text-emerald-400'
+              onClick={() => updateLightsAndTv('on')}
+              disabled={isLightsAndTvPending}
+            >
+              <PowerIcon />
+              Aprinde lumina și TV
+            </Button>
+            <Button variant='destructive' onClick={() => updateLightsAndTv('off')} disabled={isLightsAndTvPending}>
+              <PowerIcon />
+              Stinge lumina și TV
+            </Button>
+          </div>
+        </div>
+
+        <div className='border-border border-t pt-4'>
+          <p className='text-foreground mb-3 text-base font-semibold'>Control climă</p>
           <div className='grid gap-2 sm:grid-cols-2'>
             <Button
               variant='outline'
@@ -265,8 +275,7 @@ const TableAvailabilityPanel = () => {
               {isAirConditionerPending ? 'Se procesează...' : 'Pornește clima'}
             </Button>
             <Button
-              variant='secondary'
-              className='bg-muted text-muted-foreground hover:bg-muted/80'
+              variant='destructive'
               onClick={() => updateAirConditioner('off')}
               disabled={isAirConditionerPending}
             >
@@ -278,7 +287,7 @@ const TableAvailabilityPanel = () => {
         </div>
 
         <div className='border-border border-t pt-4'>
-          <p className='text-foreground mb-3 text-sm font-semibold'>Control ușă</p>
+          <p className='text-foreground mb-3 text-base font-semibold'>Control ușă</p>
           <p className='text-muted-foreground mb-2 text-sm'>
             Stare inițială:{' '}
             <span className='text-foreground font-medium'>
@@ -301,11 +310,16 @@ const TableAvailabilityPanel = () => {
               </div>
             )}
             <div className='grid gap-2 sm:grid-cols-2'>
-              <Button variant='outline' onClick={() => updateDoor('unlock')} disabled={isDoorPending}>
+              <Button
+                variant='outline'
+                className='border-emerald-600/50 text-emerald-700 hover:bg-emerald-600/10 dark:text-emerald-400'
+                onClick={() => updateDoor('unlock')}
+                disabled={isDoorPending}
+              >
                 <UnlockKeyholeIcon />
                 Descuie ușa
               </Button>
-              <Button variant='secondary' onClick={() => updateDoor('lock')} disabled={isDoorPending}>
+              <Button variant='destructive' onClick={() => updateDoor('lock')} disabled={isDoorPending}>
                 <LockKeyholeIcon />
                 Încuie ușa
               </Button>

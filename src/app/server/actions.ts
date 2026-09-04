@@ -185,7 +185,8 @@ export const createReservation = async ({
     cache: 'no-store'
   })
 
-  if (!eventTypeResponse.ok) throw new Error(`Event type-ul Calendly nu a putut fi încărcat (${eventTypeResponse.status})`)
+  if (!eventTypeResponse.ok)
+    throw new Error(`Event type-ul Calendly nu a putut fi încărcat (${eventTypeResponse.status})`)
 
   const eventTypeData = (await eventTypeResponse.json()) as {
     resource?: {

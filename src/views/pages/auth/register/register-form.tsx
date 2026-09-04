@@ -1,7 +1,7 @@
 'use client'
 
 // React Import
-import { useState } from 'react'
+import { useActionState, useState } from 'react'
 
 // Next Imports
 import Link from 'next/link'
@@ -15,28 +15,31 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
+import { register } from '@/lib/auth'
 
 const RegisterForm = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
 
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false)
+  const [privacyAccepted, setPrivacyAccepted] = useState(false)
+  const [error, formAction, isPending] = useActionState(register, null)
 
   return (
-    <form onSubmit={e => e.preventDefault()}>
+    <form action={formAction}>
       <FieldGroup className='gap-4'>
         {/* Username */}
         <Field className='gap-2'>
           <FieldLabel className='leading-5' htmlFor='username'>
             Username*
           </FieldLabel>
-          <Input type='text' id='username' placeholder='Enter your username' />
+          <Input type='text' id='username' name='name' placeholder='Enter your username' required />
         </Field>
         {/* Email */}
         <Field className='gap-2'>
           <FieldLabel className='leading-5' htmlFor='userEmail'>
             Email address*
           </FieldLabel>
-          <Input type='email' id='userEmail' placeholder='Enter your email address' />
+          <Input type='email' id='userEmail' name='email' placeholder='Enter your email address' required />
         </Field>
         {/* Password */}
         <Field className='w-full gap-2'>
@@ -46,8 +49,10 @@ const RegisterForm = () => {
           <InputGroup>
             <InputGroupInput
               id='password'
+              name='password'
               type={isPasswordVisible ? 'text' : 'password'}
               placeholder='••••••••••••••••'
+              required
             />
             <InputGroupAddon align='inline-end' className='pr-1.5'>
               <Button
@@ -71,8 +76,10 @@ const RegisterForm = () => {
           <InputGroup>
             <InputGroupInput
               id='confirmPassword'
+              name='confirmPassword'
               type={isConfirmPasswordVisible ? 'text' : 'password'}
               placeholder='••••••••••••••••'
+              required
             />
             <InputGroupAddon align='inline-end' className='pr-1.5'>
               <Button
@@ -89,14 +96,20 @@ const RegisterForm = () => {
         </Field>
         {/* Privacy policy */}
         <Field orientation='horizontal' className='flex items-center gap-2'>
-          <Checkbox id='privacyPolicy' />
+          <Checkbox
+            id='privacyPolicy'
+            checked={privacyAccepted}
+            onCheckedChange={checked => setPrivacyAccepted(checked === true)}
+          />
+          <input type='hidden' name='privacyPolicy' value={privacyAccepted ? 'on' : ''} />
           <FieldLabel htmlFor='privacyPolicy'>
             <span className='text-muted-foreground'>I agree to</span> <Link href='#'>privacy policy & terms</Link>
           </FieldLabel>
         </Field>
+        {error ? <p className='text-destructive text-sm'>{error}</p> : null}
         <Field>
-          <Button className='w-full' type='submit'>
-            Sign Up to Shadcn Studio
+          <Button className='w-full' type='submit' disabled={isPending}>
+            {isPending ? 'Se creează contul...' : 'Creează contul'}
           </Button>
         </Field>
       </FieldGroup>

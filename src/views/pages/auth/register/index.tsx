@@ -20,9 +20,7 @@ const Register = () => {
 
       <Card className='z-1 w-full gap-6 py-6 sm:max-w-lg'>
         <CardHeader className='gap-6 px-6'>
-          <Link href='/'>
-            <Logo className='gap-3' />
-          </Link>
+          <Logo className='gap-3' />
 
           <div>
             <CardTitle className='mb-2 text-2xl font-semibold'>Sign Up to Shadcn studio</CardTitle>

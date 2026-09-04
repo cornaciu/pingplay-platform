@@ -1,6 +1,5 @@
 'use client'
 
-import type { CalendarEvent, CalendarView } from '@/types/apps/calendar-types'
 
 // React Imports
 import { useEffect, useMemo, useState } from 'react'
@@ -18,6 +17,8 @@ import {
   subWeeks
 } from 'date-fns'
 import { CalendarCheckIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon } from 'lucide-react'
+
+import type { CalendarEvent, CalendarView } from '@/types/apps/calendar-types'
 
 // Component Imports
 import { Button } from '@/components/ui/button'
@@ -49,10 +50,12 @@ export function EventCalendar({ className, initialView = 'month', events = [] }:
   const [view, setView] = useState<CalendarView>(initialView)
 
   const goToToday = () => setCurrentDate(new Date())
+
   const goToPrevious = () =>
     setCurrentDate(current =>
       view === 'month' ? subMonths(current, 1) : view === 'week' ? subWeeks(current, 1) : addDays(current, -1)
     )
+
   const goToNext = () =>
     setCurrentDate(current =>
       view === 'month' ? addMonths(current, 1) : view === 'week' ? addWeeks(current, 1) : addDays(current, 1)
@@ -67,6 +70,7 @@ export function EventCalendar({ className, initialView = 'month', events = [] }:
     }
 
     window.addEventListener('keydown', handleKeyDown)
+
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 

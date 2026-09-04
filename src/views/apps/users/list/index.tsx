@@ -9,8 +9,13 @@ import { UserTableToolbar } from './user-table-toolbar'
 
 // Hook Imports
 import { useUserApp } from '@/hooks/use-user-app'
+import type { AppUser } from '@/types/apps/user-types'
 
-const UserListApp = () => {
+type UserListAppProps = {
+  initialUsers: AppUser[]
+}
+
+const UserListApp = ({ initialUsers }: UserListAppProps) => {
   const {
     filters,
     paginatedUsers,
@@ -26,7 +31,7 @@ const UserListApp = () => {
     handleRowsPerPageChange,
     handlePageChange,
     handleSortingChange
-  } = useUserApp()
+  } = useUserApp(initialUsers)
 
   return (
     <div className='flex flex-col gap-3 lg:gap-6'>

@@ -46,14 +46,6 @@ import { getInitialsFromName } from '@/lib/utils'
 // Util Imports
 import { cn } from '@/lib/utils'
 
-const ROLE_ICONS: Record<UserRole, ReactNode> = {
-  Admin: <UserRoundIcon className='size-4 text-green-600 dark:text-green-400' />,
-  Editor: <BrushIcon className='text-chart-2 size-4' />,
-  Subscriber: <CrownIcon className='text-chart-5 size-4' />,
-  Maintainer: <PencilRulerIcon className='text-chart-3 size-4' />,
-  Guest: <PencilLineIcon className='text-chart-1 size-4' />
-}
-
 const STATUS_STYLES: Record<UserStatus, string> = {
   Active:
     'bg-green-600/10 text-green-600 focus-visible:ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:focus-visible:ring-green-400/40 [a&]:hover:bg-green-600/5 dark:[a&]:hover:bg-green-400/5',
@@ -156,7 +148,6 @@ export const userTableColumns: ColumnDef<AppUser>[] = [
         </Avatar>
         <div className='flex flex-col'>
           <span className='font-medium'>{row.original.name}</span>
-          <span className='text-muted-foreground'>{row.original.email}</span>
         </div>
       </div>
     ),
@@ -165,18 +156,9 @@ export const userTableColumns: ColumnDef<AppUser>[] = [
   },
   {
     id: 'role',
-    header: 'Role',
-    accessorKey: 'role',
-    cell: ({ row }) => {
-      const role = row.original.role
-
-      return (
-        <div className='flex items-center gap-2'>
-          {ROLE_ICONS[role]}
-          <span className='capitalize'>{role}</span>
-        </div>
-      )
-    },
+    header: 'Email',
+    accessorKey: 'email',
+    cell: ({ row }) => <span className='text-muted-foreground'>{row.original.email}</span>,
     enableSorting: true
   },
   {
