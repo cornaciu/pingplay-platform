@@ -69,6 +69,7 @@ const OrdersDashboard = async () => {
 
   return (
     <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
+      <TableAvailabilityPanel />
       {/* Statistics Cards */}
       <div className='col-span-full grid gap-6 lg:col-span-2'>
         {DASHBOARD_EVENT_TYPES.map(eventType => {
@@ -245,7 +246,6 @@ const OrdersDashboard = async () => {
         </Card>
       </div>
 
-      <TableAvailabilityPanel />
 
       <CreateReservationCard />
 
