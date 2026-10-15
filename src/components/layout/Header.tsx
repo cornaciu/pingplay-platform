@@ -32,8 +32,8 @@ const Header = ({ user }: { user: HeaderUser }) => {
   const segments = pathname.split('/').filter(Boolean)
 
   return (
-    <header className='bg-card sticky top-0 z-50 border-b'>
-      <div className='mx-auto flex max-w-360 items-center justify-between gap-6 px-4 py-2 sm:px-6'>
+    <header className='bg-card/85 sticky top-0 z-40 border-b backdrop-blur-xl'>
+      <div className='mx-auto flex max-w-360 items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8'>
         <div className='flex items-center gap-4'>
           <SidebarTrigger className='[&_svg]:size-5!' />
           <Separator orientation='vertical' className='hidden h-4! data-vertical:self-center sm:block' />
@@ -41,7 +41,22 @@ const Header = ({ user }: { user: HeaderUser }) => {
             <BreadcrumbList>
               {segments.map((segment, index) => {
                 const isLast = index === segments.length - 1
-                const label = segment.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+
+                const labels: Record<string, string> = {
+                  dashboard: 'Dashboard',
+                  rezervari: 'Privire de ansamblu',
+                  apps: 'Aplicații',
+                  reservations: 'Rezervări',
+                  calendar: 'Calendar',
+                  users: 'Clienți',
+                  list: 'Listă',
+                  view: 'Detalii',
+                  pages: 'Cont',
+                  'user-settings': 'Setări',
+                  'user-profile': 'Profil'
+                }
+
+                const label = labels[segment] ?? segment.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
                 const href = '/' + segments.slice(0, index + 1).join('/')
 
                 return (

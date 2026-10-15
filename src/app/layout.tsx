@@ -51,13 +51,11 @@ export const metadata: Metadata = {
       }
     ]
   },
-  description:
-    'Build modern admin dashboards faster with AdminCN Free. A free shadcn admin dashboard template built with Tailwind CSS, featuring responsive layouts and essential pages.',
+  description: 'Administrarea PINGPLAY: rezervări, clienți și controlul locației.',
   metadataBase: new URL(`${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}`),
   openGraph: {
     title: 'PINGPLAY - Dashboard',
-    description:
-      'Build modern admin dashboards faster with AdminCN Free. A free shadcn admin dashboard template built with Tailwind CSS, featuring responsive layouts and essential pages.',
+    description: 'Administrarea PINGPLAY: rezervări, clienți și controlul locației.',
     type: 'website',
     siteName: 'PINGPLAY',
     url: process.env.NEXT_PUBLIC_APP_URL,
@@ -67,22 +65,21 @@ export const metadata: Metadata = {
         type: 'image/png',
         width: 1200,
         height: 630,
-        alt: 'AdminCN - Free Shadcn Admin Dashboard Template'
+        alt: 'PINGPLAY - Dashboard'
       }
     ]
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AdminCN - Free Shadcn Admin Dashboard Template',
-    description:
-      'Build modern admin dashboards faster with AdminCN Free. A free shadcn admin dashboard template built with Tailwind CSS, featuring responsive layouts and essential pages.'
+    title: 'PINGPLAY - Dashboard',
+    description: 'Administrarea PINGPLAY: rezervări, clienți și controlul locației.'
   }
 }
 
 const RootLayout = ({ children }: Readonly<{ children: ReactNode }>) => {
   return (
     <html
-      lang='en'
+      lang='ro'
       className={cn(geistSans.variable, geistMono.variable, 'flex min-h-full w-full antialiased')}
       data-scroll-behavior='smooth'
       suppressHydrationWarning

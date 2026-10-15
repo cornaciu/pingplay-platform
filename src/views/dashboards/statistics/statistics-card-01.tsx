@@ -31,7 +31,7 @@ const StatisticsCard = ({
         <p className='text-muted-foreground text-xs'>{subtitle}</p>
       </CardHeader>
       <CardContent className='flex flex-col gap-4 px-4 pb-4 sm:px-5 sm:pb-5'>
-        <div className='bg-muted/40 border-border/70 flex items-center justify-between gap-3 rounded-lg border px-3 py-3'>
+        <div className='bg-muted/50 flex flex-wrap items-center justify-between gap-3 rounded-xl px-4 py-5'>
           <div className='flex items-baseline gap-2'>
             <span className='text-4xl leading-none font-bold tracking-tight'>{value}</span>
             <span className='text-muted-foreground text-xs font-medium'>rezervări</span>

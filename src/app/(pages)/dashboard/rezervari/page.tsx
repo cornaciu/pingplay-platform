@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 import { CalendarClockIcon, CalendarDaysIcon, MailIcon, PhoneIcon, TagIcon } from 'lucide-react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -68,187 +70,204 @@ const OrdersDashboard = async () => {
     .sort((first, second) => new Date(first.startTime).getTime() - new Date(second.startTime).getTime())
 
   return (
-    <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
-      <TableAvailabilityPanel />
-      {/* Statistics Cards */}
-      <div className='col-span-full grid gap-6 lg:col-span-2'>
-        {DASHBOARD_EVENT_TYPES.map(eventType => {
-          const bookingStatsForEventType = bookingStats.bookings.find(item => item.eventType === eventType.value)
-          const bookingCount = bookingStatsForEventType?.count
-          const previousBookingCount = bookingStatsForEventType?.previousCount
+    <div className='space-y-6'>
+      <div className='flex flex-wrap items-end justify-between gap-4'>
+        <div>
+          <p className='text-primary mb-2 text-xs font-semibold tracking-[0.18em] uppercase'>PINGPLAY · Administrare</p>
+          <h1 className='text-3xl font-semibold tracking-tight sm:text-4xl'>Privire de ansamblu</h1>
+          <p className='text-muted-foreground mt-2 text-sm'>
+            Rezervări, activitate și controlul locației, într-un singur loc.
+          </p>
+        </div>
+        <Link
+          href='/apps/calendar'
+          className='bg-card hover:bg-accent focus-visible:outline-ring inline-flex h-10 items-center gap-2 rounded-xl border px-4 text-sm font-medium transition-colors focus-visible:outline-2'
+        >
+          <CalendarDaysIcon className='text-primary size-4' /> Deschide calendarul
+        </Link>
+      </div>
+      <div className='grid grid-cols-1 items-start gap-6 xl:grid-cols-3'>
+        <TableAvailabilityPanel />
+        {/* Statistics Cards */}
+        <div className='order-1 grid min-w-0 gap-6 xl:col-span-2'>
+          {DASHBOARD_EVENT_TYPES.map(eventType => {
+            const bookingStatsForEventType = bookingStats.bookings.find(item => item.eventType === eventType.value)
+            const bookingCount = bookingStatsForEventType?.count
+            const previousBookingCount = bookingStatsForEventType?.previousCount
 
-          const bookingChangePercent =
-            bookingCount !== null &&
-            bookingCount !== undefined &&
-            previousBookingCount !== null &&
-            previousBookingCount !== undefined
-              ? previousBookingCount === 0
-                ? null
-                : Math.round(((bookingCount - previousBookingCount) / previousBookingCount) * 100)
-              : null
+            const bookingChangePercent =
+              bookingCount !== null &&
+              bookingCount !== undefined &&
+              previousBookingCount !== null &&
+              previousBookingCount !== undefined
+                ? previousBookingCount === 0
+                  ? null
+                  : Math.round(((bookingCount - previousBookingCount) / previousBookingCount) * 100)
+                : null
 
-          const futureBookingsForEventType = futureBookings.find(item => item.eventType === eventType.value)?.bookings
+            const futureBookingsForEventType = futureBookings.find(item => item.eventType === eventType.value)?.bookings
 
-          return (
-            <StatisticsCard
-              key={eventType.value}
-              title={eventType.label}
-              value={bookingCount ?? '-'}
-              comparison={
-                <div className='text-right text-xs'>
-                  <span className='text-muted-foreground block'>față de luna trecută</span>
-                  <span
-                    className={
-                      bookingChangePercent === null
-                        ? ''
-                        : bookingChangePercent > 0
-                          ? 'font-semibold text-emerald-600 dark:text-emerald-400'
-                          : bookingChangePercent < 0
-                            ? 'text-destructive font-semibold'
-                            : 'font-semibold'
-                    }
-                  >
-                    {bookingChangePercent === null
-                      ? previousBookingCount === 0 && bookingCount && bookingCount > 0
-                        ? 'rezervări noi'
-                        : '-'
-                      : `${bookingChangePercent > 0 ? '+' : ''}${bookingChangePercent}%`}
-                  </span>
-                </div>
-              }
-              className={
-                eventType.value === 'masa1'
-                  ? 'border-emerald-500/60 bg-emerald-100/70 dark:border-emerald-400/50 dark:bg-emerald-900/40'
-                  : 'border-blue-500/60 bg-blue-100/70 dark:border-blue-400/50 dark:bg-blue-900/40'
-              }
-              details={
-                <div className='flex flex-col gap-3 text-xs'>
-                  <div className='bg-muted/25 border-border/60 flex flex-wrap gap-2 rounded-lg border p-2'>
-                    <span className='inline-flex items-center gap-1 rounded-md border border-amber-600/40 bg-amber-500/10 px-2.5 py-1.5 font-medium text-amber-700 dark:border-amber-400/40 dark:text-amber-300'>
-                      Reprogramate <strong>{bookingStatsForEventType?.rescheduled ?? '-'}</strong>
-                    </span>
-                    <span className='inline-flex items-center gap-1 rounded-md border border-red-600/40 bg-red-500/10 px-2.5 py-1.5 font-medium text-red-700 dark:border-red-400/40 dark:text-red-300'>
-                      Anulate <strong>{bookingStatsForEventType?.canceled ?? '-'}</strong>
+            return (
+              <StatisticsCard
+                key={eventType.value}
+                title={eventType.label}
+                value={bookingCount ?? '-'}
+                comparison={
+                  <div className='text-right text-xs'>
+                    <span className='text-muted-foreground block'>față de luna trecută</span>
+                    <span
+                      className={
+                        bookingChangePercent === null
+                          ? ''
+                          : bookingChangePercent > 0
+                            ? 'font-semibold text-emerald-600 dark:text-emerald-400'
+                            : bookingChangePercent < 0
+                              ? 'text-destructive font-semibold'
+                              : 'font-semibold'
+                      }
+                    >
+                      {bookingChangePercent === null
+                        ? previousBookingCount === 0 && bookingCount && bookingCount > 0
+                          ? 'rezervări noi'
+                          : '-'
+                        : `${bookingChangePercent > 0 ? '+' : ''}${bookingChangePercent}%`}
                     </span>
                   </div>
-                  <div className='bg-muted/25 border-border/60 rounded-lg border p-3'>
-                    <div className='flex items-center gap-2'>
-                      <span className='text-foreground flex items-center gap-2 font-semibold'>
-                        <CalendarClockIcon className='text-primary size-3.5' />
-                        Rezervări viitoare
+                }
+                className={
+                  eventType.value === 'masa1' ? 'border-t-4 border-t-emerald-500' : 'border-t-4 border-t-blue-500'
+                }
+                details={
+                  <div className='flex flex-col gap-3 text-xs'>
+                    <div className='bg-muted/25 border-border/60 flex flex-wrap gap-2 rounded-lg border p-2'>
+                      <span className='inline-flex items-center gap-1 rounded-md border border-amber-600/40 bg-amber-500/10 px-2.5 py-1.5 font-medium text-amber-700 dark:border-amber-400/40 dark:text-amber-300'>
+                        Reprogramate <strong>{bookingStatsForEventType?.rescheduled ?? '-'}</strong>
                       </span>
-                      <span className='bg-primary/10 text-primary rounded-md px-2 py-0.5 text-xs font-bold'>
-                        {futureBookingsForEventType?.count ?? '-'}
+                      <span className='inline-flex items-center gap-1 rounded-md border border-red-600/40 bg-red-500/10 px-2.5 py-1.5 font-medium text-red-700 dark:border-red-400/40 dark:text-red-300'>
+                        Anulate <strong>{bookingStatsForEventType?.canceled ?? '-'}</strong>
                       </span>
                     </div>
-                    <div className='mt-3 flex max-h-72 flex-col gap-2 overflow-y-auto pr-1'>
-                      {futureBookingsForEventType?.reservations.map(reservation => (
-                        <div
-                          key={`${reservation.eventTypeUri}-${reservation.startTime}`}
-                          className='bg-muted/40 border-border/60 grid gap-4 rounded-md border p-4 md:grid-cols-[minmax(0,1fr)_minmax(220px,auto)]'
-                        >
-                          <div className='min-w-0'>
-                            <span className='text-foreground flex items-start gap-2 text-base leading-6 font-semibold'>
-                              <CalendarDaysIcon className='text-primary mt-0.5 size-4 shrink-0' />
-                              {formatBookingDate(reservation.startTime)}
-                            </span>
-                            <span className='text-muted-foreground mt-2 flex items-start gap-2 text-sm leading-5'>
-                              <TagIcon className='mt-0.5 size-3.5 shrink-0' />
-                              {CALENDLY_EVENT_TYPE_LABELS[reservation.eventTypeUri] ?? 'Event type necunoscut'}
-                            </span>
-                          </div>
-                          <div className='border-border/60 border-t pt-3 text-sm md:border-t-0 md:border-l md:pt-0 md:pl-4'>
-                            <span className='text-foreground block text-base font-semibold'>
-                              {reservation.clientName ?? 'Client necunoscut'}
-                            </span>
-                            {reservation.clientEmail && (
-                              <span className='text-muted-foreground mt-2 flex items-start gap-2 text-sm break-all'>
-                                <MailIcon className='mt-0.5 size-3.5 shrink-0' />
-                                <span>{reservation.clientEmail}</span>
+                    <div className='bg-muted/25 border-border/60 rounded-lg border p-3'>
+                      <div className='flex items-center gap-2'>
+                        <span className='text-foreground flex items-center gap-2 font-semibold'>
+                          <CalendarClockIcon className='text-primary size-3.5' />
+                          Rezervări viitoare
+                        </span>
+                        <span className='bg-primary/10 text-primary rounded-md px-2 py-0.5 text-xs font-bold'>
+                          {futureBookingsForEventType?.count ?? '-'}
+                        </span>
+                      </div>
+                      <div className='mt-3 flex max-h-72 flex-col gap-2 overflow-y-auto pr-1'>
+                        {futureBookingsForEventType?.reservations.map(reservation => (
+                          <div
+                            key={`${reservation.eventTypeUri}-${reservation.startTime}`}
+                            className='bg-muted/40 border-border/60 grid gap-4 rounded-md border p-4 md:grid-cols-[minmax(0,1fr)_minmax(220px,auto)]'
+                          >
+                            <div className='min-w-0'>
+                              <span className='text-foreground flex items-start gap-2 text-base leading-6 font-semibold'>
+                                <CalendarDaysIcon className='text-primary mt-0.5 size-4 shrink-0' />
+                                {formatBookingDate(reservation.startTime)}
                               </span>
-                            )}
-                            {reservation.clientPhone && (
-                              <span className='text-muted-foreground mt-1 flex items-center gap-2 text-sm'>
-                                <PhoneIcon className='size-3.5 shrink-0' />
-                                {reservation.clientPhone}
+                              <span className='text-muted-foreground mt-2 flex items-start gap-2 text-sm leading-5'>
+                                <TagIcon className='mt-0.5 size-3.5 shrink-0' />
+                                {CALENDLY_EVENT_TYPE_LABELS[reservation.eventTypeUri] ?? 'Event type necunoscut'}
                               </span>
-                            )}
-                            {reservation.eventUri && (
-                              <form action={cancelCalendlyReservation} className='mt-2'>
-                                <input type='hidden' name='eventUri' value={reservation.eventUri} />
-                                <Button type='submit' variant='destructive' size='sm' className='mt-1 w-full text-sm'>
-                                  Anulează
-                                </Button>
-                              </form>
-                            )}
+                            </div>
+                            <div className='border-border/60 border-t pt-3 text-sm md:border-t-0 md:border-l md:pt-0 md:pl-4'>
+                              <span className='text-foreground block text-base font-semibold'>
+                                {reservation.clientName ?? 'Client necunoscut'}
+                              </span>
+                              {reservation.clientEmail && (
+                                <span className='text-muted-foreground mt-2 flex items-start gap-2 text-sm break-all'>
+                                  <MailIcon className='mt-0.5 size-3.5 shrink-0' />
+                                  <span>{reservation.clientEmail}</span>
+                                </span>
+                              )}
+                              {reservation.clientPhone && (
+                                <span className='text-muted-foreground mt-1 flex items-center gap-2 text-sm'>
+                                  <PhoneIcon className='size-3.5 shrink-0' />
+                                  {reservation.clientPhone}
+                                </span>
+                              )}
+                              {reservation.eventUri && (
+                                <form action={cancelCalendlyReservation} className='mt-2'>
+                                  <input type='hidden' name='eventUri' value={reservation.eventUri} />
+                                  <Button type='submit' variant='destructive' size='sm' className='mt-1 w-full text-sm'>
+                                    Anulează
+                                  </Button>
+                                </form>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                      {futureBookingsForEventType?.reservations.length === 0 && (
-                        <p className='text-muted-foreground border-border/60 border-t pt-2'>
-                          Nu sunt rezervări programate.
-                        </p>
+                        ))}
+                        {futureBookingsForEventType?.reservations.length === 0 && (
+                          <p className='text-muted-foreground border-border/60 border-t pt-2'>
+                            Nu sunt rezervări programate.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                }
+              />
+            )
+          })}
+          <Card className='w-full'>
+            <CardHeader>
+              <CardTitle>Rezervări curente</CardTitle>
+            </CardHeader>
+            <CardContent className='w-full'>
+              <div className='grid w-full min-w-0 gap-3'>
+                {currentReservations.map(reservation => (
+                  <div
+                    key={`${reservation.table}-${reservation.eventTypeUri}-${reservation.startTime}`}
+                    className='bg-muted/40 border-border/60 grid w-full min-w-0 gap-3 rounded-md border p-4 sm:grid-cols-[minmax(0,1fr)_minmax(180px,auto)]'
+                  >
+                    <div className='min-w-0'>
+                      <div className='flex flex-wrap items-center gap-x-3 gap-y-1'>
+                        <span className='text-foreground flex items-center gap-1.5 font-semibold'>
+                          <CalendarDaysIcon className='text-primary size-4 shrink-0' />
+                          {formatBookingDate(reservation.startTime)}
+                        </span>
+                      </div>
+                      <span className='text-muted-foreground mt-2 flex items-center gap-1.5 truncate text-sm'>
+                        <TagIcon className='size-3.5 shrink-0' />
+                        {CALENDLY_EVENT_TYPE_LABELS[reservation.eventTypeUri] ?? 'Event type necunoscut'}
+                      </span>
+                    </div>
+                    <div className='border-border/60 text-sm sm:border-l sm:pl-4'>
+                      <span className='text-foreground block font-semibold'>
+                        {reservation.clientName ?? 'Client necunoscut'}
+                      </span>
+                      {reservation.clientEmail && (
+                        <span className='text-muted-foreground mt-1 flex items-center gap-1.5'>
+                          <MailIcon className='size-3.5 shrink-0' />
+                          <span className='max-w-52 truncate'>{reservation.clientEmail}</span>
+                        </span>
+                      )}
+                      {reservation.clientPhone && (
+                        <span className='text-muted-foreground flex items-center gap-1.5'>
+                          <PhoneIcon className='size-3.5 shrink-0' />
+                          {reservation.clientPhone}
+                        </span>
                       )}
                     </div>
                   </div>
-                </div>
-              }
-            />
-          )
-        })}
-        <Card className='w-full'>
-          <CardHeader>
-            <CardTitle>Rezervări curente</CardTitle>
-          </CardHeader>
-          <CardContent className='w-full'>
-            <div className='grid w-full min-w-0 gap-3'>
-              {currentReservations.map(reservation => (
-                <div
-                  key={`${reservation.table}-${reservation.eventTypeUri}-${reservation.startTime}`}
-                  className='bg-muted/40 border-border/60 grid w-full min-w-0 gap-3 rounded-md border p-4 sm:grid-cols-[minmax(0,1fr)_minmax(180px,auto)]'
-                >
-                  <div className='min-w-0'>
-                    <div className='flex flex-wrap items-center gap-x-3 gap-y-1'>
-                      <span className='text-foreground flex items-center gap-1.5 font-semibold'>
-                        <CalendarDaysIcon className='text-primary size-4 shrink-0' />
-                        {formatBookingDate(reservation.startTime)}
-                      </span>
-                    </div>
-                    <span className='text-muted-foreground mt-2 flex items-center gap-1.5 truncate text-sm'>
-                      <TagIcon className='size-3.5 shrink-0' />
-                      {CALENDLY_EVENT_TYPE_LABELS[reservation.eventTypeUri] ?? 'Event type necunoscut'}
-                    </span>
-                  </div>
-                  <div className='border-border/60 text-sm sm:border-l sm:pl-4'>
-                    <span className='text-foreground block font-semibold'>
-                      {reservation.clientName ?? 'Client necunoscut'}
-                    </span>
-                    {reservation.clientEmail && (
-                      <span className='text-muted-foreground mt-1 flex items-center gap-1.5'>
-                        <MailIcon className='size-3.5 shrink-0' />
-                        <span className='max-w-52 truncate'>{reservation.clientEmail}</span>
-                      </span>
-                    )}
-                    {reservation.clientPhone && (
-                      <span className='text-muted-foreground flex items-center gap-1.5'>
-                        <PhoneIcon className='size-3.5 shrink-0' />
-                        {reservation.clientPhone}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {currentReservations.length === 0 && (
-                <p className='text-muted-foreground text-sm'>Nu există rezervări curente.</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+                {currentReservations.length === 0 && (
+                  <p className='text-muted-foreground text-sm'>Nu există rezervări curente.</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className='order-3 min-w-0 xl:col-span-full'>
+          <CreateReservationCard />
+        </div>
+
+        <SalesMetricsCard revenueStats={stripeRevenueStats} className='order-4 col-span-full w-full' />
       </div>
-
-      <CreateReservationCard />
-
-      <SalesMetricsCard revenueStats={stripeRevenueStats} className='col-span-full w-full' />
     </div>
   )
 }
