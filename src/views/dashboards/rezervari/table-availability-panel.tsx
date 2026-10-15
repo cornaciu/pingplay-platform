@@ -157,13 +157,13 @@ const TableAvailabilityPanel = () => {
   }, [])
 
   return (
-    <Card className='order-2 w-full min-w-0 xl:col-span-1'>
+    <Card className='order-1 col-span-full w-full min-w-0'>
       <CardHeader>
         <p className='text-foreground text-lg font-semibold tracking-tight'>Control locație</p>
         <p className='text-muted-foreground text-xs'>Comenzi rapide pentru mese și echipamente</p>
       </CardHeader>
-      <CardContent className='flex flex-1 flex-col gap-5 [&_button]:h-auto [&_button]:min-h-11 [&_button]:py-2 [&_button]:whitespace-normal'>
-        <div className='flex flex-col gap-2'>
+      <CardContent className='grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4 [&_button]:h-auto [&_button]:min-h-11 [&_button]:py-2 [&_button]:whitespace-normal'>
+        <div className='col-span-full grid gap-3 sm:grid-cols-2'>
           {(
             [
               { key: 'masa1', label: 'MASA 1' },

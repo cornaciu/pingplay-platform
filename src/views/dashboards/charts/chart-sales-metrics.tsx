@@ -1,161 +1,140 @@
 'use client'
 
-// Third-party Imports
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
-import { TrendingUpIcon, BadgePercentIcon, DollarSignIcon, ShoppingBagIcon } from 'lucide-react'
+import { ChartNoAxesCombinedIcon } from 'lucide-react'
 
-// Component Imports
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import type { StripeRevenueStats } from '@/lib/stripe'
 
 const revenueChartConfig = {
-  sales: {
-    label: 'Sales'
-  },
-  january: {
-    label: 'January',
-    color: 'var(--primary)'
-  },
-  february: {
-    label: 'February',
-    color: 'color-mix(in oklab, var(--primary) 60%, transparent)'
-  },
-  march: {
-    label: 'March',
-    color: 'color-mix(in oklab, var(--primary) 20%, transparent)'
-  }
+  revenue: { label: 'Venituri brute', color: '#E83471' }
 } satisfies ChartConfig
 
-const formatCurrency = (amount: number | null, currency: string | null) => {
-  if (amount === null || !currency) return '-'
-
-  return new Intl.NumberFormat('ro-RO', { style: 'currency', currency: currency.toUpperCase() }).format(amount / 100)
-}
-
-const formatRon = (amount: number) =>
-  new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(amount)
-
-const formatChartValue = (amount: number) =>
-  `${new Intl.NumberFormat('ro-RO', { maximumFractionDigits: 0 }).format(amount)} RON`
-
-const formatChartDate = (date: string) => {
-  const [, month, day] = date.split('-')
-
-  return `${day}.${month}`
-}
-
 const SalesMetricsCard = ({ revenueStats, className }: { revenueStats: StripeRevenueStats; className?: string }) => {
-  const metricsData = [
-    {
-      icons: <TrendingUpIcon className='size-5' />,
-      title: 'Venituri brute',
-      value: formatCurrency(revenueStats.revenue, revenueStats.currency)
-    },
-    {
-      icons: <DollarSignIcon className='size-5' />,
-      title: 'Venituri nete',
-      value: formatCurrency(revenueStats.netRevenue, revenueStats.currency)
-    },
-    {
-      icons: <BadgePercentIcon className='size-5' />,
-      title: 'Refunduri',
-      value: formatCurrency(revenueStats.refunds, revenueStats.currency)
-    },
-    {
-      icons: <BadgePercentIcon className='size-5' />,
-      title: 'Comisioane Stripe',
-      value: formatCurrency(revenueStats.fees, revenueStats.currency)
-    },
-    {
-      icons: <DollarSignIcon className='size-5' />,
-      title: 'Plată medie',
-      value: formatCurrency(revenueStats.averagePayment, revenueStats.currency)
-    },
-    {
-      icons: <ShoppingBagIcon className='size-5' />,
-      title: 'Tranzacții reușite',
-      value: revenueStats.transactions ?? '-'
-    }
+  const currency = revenueStats.currency?.toUpperCase() ?? 'RON'
+
+  const formatAmount = (amount: number) =>
+    new Intl.NumberFormat('ro-RO', { style: 'currency', currency, maximumFractionDigits: 2 }).format(amount)
+
+  const formatMetric = (amount: number | null) => (amount === null ? 'Indisponibil' : formatAmount(amount / 100))
+
+  const formatDate = (date: string) => {
+    const [, month, day] = date.split('-')
+
+    return `${day}.${month}`
+  }
+
+  const metrics = [
+    { title: 'Venituri brute', value: formatMetric(revenueStats.revenue) },
+    { title: 'Venituri nete', value: formatMetric(revenueStats.netRevenue) },
+    { title: 'Rambursări', value: formatMetric(revenueStats.refunds) },
+    { title: 'Comisioane Stripe', value: formatMetric(revenueStats.fees) },
+    { title: 'Plată medie', value: formatMetric(revenueStats.averagePayment) },
+    { title: 'Tranzacții reușite', value: revenueStats.transactions ?? 'Indisponibil' }
   ]
 
-  const revenueChartData = revenueStats.dailyRevenue.map(item => ({
-    month: item.date,
-    sales: item.amount / 100,
-    fill: 'var(--primary)'
-  }))
+  const data = revenueStats.dailyRevenue.map(item => ({ date: item.date, revenue: item.amount / 100 }))
+  const ticks = data.filter((_, i) => i % 5 === 0 || i === data.length - 1).map(item => item.date)
+  const available = revenueStats.revenue !== null
 
   return (
     <Card className={className}>
-      <CardContent>
-        <div className='grid items-start gap-6 lg:grid-cols-5'>
-          <div className='flex min-w-0 flex-col gap-5 lg:col-span-2'>
-            <div className='flex items-center gap-3'>
-              <img src='/images/brands/logo-square.webp' className='size-10.5 rounded-lg' alt='logo' />
-              <div className='flex flex-col gap-0.5'>
-                <span className='text-xl font-medium'>Stripe</span>
-                <span className='text-muted-foreground text-sm'>Venituri din ultimele 30 de zile</span>
-              </div>
+      <CardHeader>
+        <CardTitle className='flex items-center gap-2 text-xl font-semibold'>
+          <ChartNoAxesCombinedIcon className='text-primary size-5' /> Venituri
+        </CardTitle>
+        <p className='text-muted-foreground text-sm'>Stripe · ultimele 30 de zile · {currency}</p>
+      </CardHeader>
+      <CardContent className='min-w-0 space-y-6'>
+        <dl className='grid gap-3 sm:grid-cols-2 xl:grid-cols-3'>
+          {metrics.map(metric => (
+            <div key={metric.title} className='min-w-0 rounded-xl border p-4'>
+              <dt className='text-muted-foreground text-sm'>{metric.title}</dt>
+              <dd className='text-foreground mt-2 text-2xl font-semibold tracking-tight tabular-nums'>
+                {metric.value}
+              </dd>
             </div>
-
-            <div className='grid gap-4 sm:grid-cols-2'>
-              {metricsData.map((metric, index) => (
-                <Card key={index} className='ring-foreground/10 py-2 shadow-none ring-1'>
-                  <CardContent className='flex items-center gap-3 px-4'>
-                    <Avatar className='rounded-sm after:border-0'>
-                      <AvatarFallback className='bg-primary/10 text-primary shrink-0 rounded-sm'>
-                        {metric.icons}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className='flex flex-col gap-0.5'>
-                      <span className='text-muted-foreground text-sm font-medium'>{metric.title}</span>
-                      <span className='text-lg font-medium'>{metric.value}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-          <Card className='ring-foreground/10 flex h-full min-w-0 flex-col gap-4 shadow-none ring-1 lg:col-span-3'>
-            <CardHeader className='gap-1'>
-              <CardTitle className='text-lg font-semibold'>Venituri brute (RON)</CardTitle>
-            </CardHeader>
-
-            <CardContent className='flex min-w-0 flex-1 flex-col space-y-4'>
-              <ChartContainer config={revenueChartConfig} className='min-h-64 w-full flex-1'>
-                <BarChart data={revenueChartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                  <CartesianGrid vertical={false} strokeDasharray='3 3' />
+          ))}
+        </dl>
+        {available && data.length > 0 ? (
+          <>
+            <h3 className='font-semibold'>Venituri brute pe zi ({currency})</h3>
+            <p className='text-muted-foreground text-xs sm:hidden'>
+              Glisează graficul lateral pentru toate zilele. Atinge o bară pentru sumă.
+            </p>
+            <div className='max-w-full overflow-x-auto overscroll-x-contain rounded-xl border p-3'>
+              <ChartContainer config={revenueChartConfig} className='aspect-auto h-80 w-full min-w-160 sm:h-96'>
+                <BarChart accessibilityLayer data={data} margin={{ top: 16, right: 16, bottom: 8, left: 4 }}>
+                  <CartesianGrid vertical={false} stroke='#303036' strokeDasharray='3 4' />
                   <XAxis
-                    dataKey='month'
+                    dataKey='date'
+                    ticks={ticks}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={formatChartDate}
-                    interval={0}
-                    angle={-45}
-                    textAnchor='end'
-                    height={50}
-                    tickMargin={10}
-                    tick={{ fontSize: 12 }}
+                    tickFormatter={formatDate}
+                    tickMargin={14}
+                    height={40}
+                    tick={{ fontSize: 13, fill: '#d4d4dc' }}
                   />
                   <YAxis
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={value => formatChartValue(Number(value))}
-                    width={92}
-                    tickMargin={6}
-                    tick={{ fontSize: 14 }}
+                    width={64}
+                    tickMargin={10}
+                    tickCount={5}
+                    tickFormatter={value =>
+                      new Intl.NumberFormat('ro-RO', { maximumFractionDigits: 0 }).format(Number(value))
+                    }
+                    tick={{ fontSize: 13, fill: '#d4d4dc' }}
                   />
                   <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent hideLabel formatter={value => formatRon(Number(value))} />}
+                    cursor={{ fill: '#ffffff0d' }}
+                    content={
+                      <ChartTooltipContent
+                        labelFormatter={value => formatDate(String(value))}
+                        formatter={value => formatAmount(Number(value))}
+                      />
+                    }
                   />
-                  <Bar dataKey='sales' fill='var(--primary)' radius={[4, 4, 0, 0]} />
+                  <Bar dataKey='revenue' fill='var(--color-revenue)' radius={[5, 5, 0, 0]} maxBarSize={32} />
                 </BarChart>
               </ChartContainer>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+            <details className='rounded-xl border p-4'>
+              <summary className='cursor-pointer text-sm font-medium text-[#ffacc8]'>Vezi valorile zilnice</summary>
+              <div className='mt-4 max-h-72 overflow-auto'>
+                <table className='w-full text-left text-sm'>
+                  <caption className='sr-only'>Venituri brute zilnice în {currency}</caption>
+                  <thead className='text-muted-foreground sticky top-0 bg-black'>
+                    <tr>
+                      <th scope='col' className='py-2'>
+                        Data
+                      </th>
+                      <th scope='col' className='py-2 text-right'>
+                        Venituri brute
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.map(item => (
+                      <tr key={item.date} className='border-t'>
+                        <th scope='row' className='py-2 font-normal'>
+                          {formatDate(item.date)}
+                        </th>
+                        <td className='py-2 text-right tabular-nums'>{formatAmount(item.revenue)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          </>
+        ) : (
+          <p role='status' className='text-muted-foreground rounded-xl border border-dashed p-6 text-sm'>
+            Veniturile nu au putut fi încărcate. Verifică integrarea Stripe și reîncarcă pagina.
+          </p>
+        )}
       </CardContent>
     </Card>
   )

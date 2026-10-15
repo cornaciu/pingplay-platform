@@ -7,7 +7,7 @@ const GOOGLE_CALENDAR_FEED_URL =
 const unescapeIcsText = (value: string) =>
   value.replace(/\\n/g, '\n').replace(/\\,/g, ',').replace(/\\;/g, ';').replace(/\\\\/g, '\\')
 
-const parseIcsDate = (value: string, allDay: boolean) => {
+export const parseIcsDate = (value: string, allDay: boolean, timeZone = 'Europe/Bucharest') => {
   if (allDay) {
     const year = Number(value.slice(0, 4))
     const month = Number(value.slice(4, 6)) - 1
@@ -24,9 +24,40 @@ const parseIcsDate = (value: string, allDay: boolean) => {
   const minutes = Number(normalized.slice(11, 13))
   const seconds = Number(normalized.slice(13, 15))
 
-  return value.endsWith('Z')
-    ? new Date(Date.UTC(year, month, day, hours, minutes, seconds))
-    : new Date(year, month, day, hours, minutes, seconds)
+  const wallTime = Date.UTC(year, month, day, hours, minutes, seconds)
+
+  if (value.endsWith('Z')) return new Date(wallTime)
+
+  // Resolve the feed's wall time explicitly; the Vercel server runs in UTC.
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23'
+  })
+
+  let timestamp = wallTime
+
+  for (let pass = 0; pass < 2; pass++) {
+    const parts = Object.fromEntries(formatter.formatToParts(new Date(timestamp)).map(part => [part.type, part.value]))
+
+    const displayed = Date.UTC(
+      Number(parts.year),
+      Number(parts.month) - 1,
+      Number(parts.day),
+      Number(parts.hour),
+      Number(parts.minute),
+      Number(parts.second)
+    )
+
+    timestamp += wallTime - displayed
+  }
+
+  return new Date(timestamp)
 }
 
 const getProperty = (event: string, name: string) => {
@@ -40,16 +71,19 @@ const getEventColor = (title: string): events => {
 
   if (normalizedTitle.includes('ambele')) return 'ambele'
   if (normalizedTitle.includes('masa 1')) return 'business'
-  if (/nr\.?\s*2/.test(normalizedTitle)) return 'masa2'
+  if (/masa\s*2|nr\.?\s*2/.test(normalizedTitle)) return 'masa2'
 
   return 'etc'
 }
 
 export const getGoogleCalendarEvents = async (): Promise<CalendarEvent[]> => {
   try {
-    const response = await fetch(GOOGLE_CALENDAR_FEED_URL, { next: { revalidate: 60 } })
+    const response = await fetch(GOOGLE_CALENDAR_FEED_URL, {
+      next: { revalidate: 60 },
+      signal: AbortSignal.timeout(15000)
+    })
 
-    if (!response.ok) return []
+    if (!response.ok) throw new Error('Fluxul Google Calendar nu este disponibil.')
 
     const ics = await response.text()
     const unfoldedIcs = ics.replace(/\r?\n[ \t]/g, '')
@@ -64,10 +98,17 @@ export const getGoogleCalendarEvents = async (): Promise<CalendarEvent[]> => {
         const title = getProperty(event, 'SUMMARY') || 'Rezervare'
         const allDay = /^DTSTART;VALUE=DATE:/m.test(event)
 
-        if (!startValue) return null
+        if (!startValue || getProperty(event, 'STATUS') === 'CANCELLED') return null
 
-        const start = parseIcsDate(startValue, allDay)
-        const end = endValue ? parseIcsDate(endValue, allDay) : new Date(start.getTime() + 60 * 60 * 1000)
+        const startZone = event.match(/^DTSTART;[^:\r\n]*TZID=([^;:\r\n]+)/m)?.[1].replace(/"/g, '')
+        const endZone = event.match(/^DTEND;[^:\r\n]*TZID=([^;:\r\n]+)/m)?.[1].replace(/"/g, '')
+        const start = parseIcsDate(startValue, allDay, startZone)
+
+        const end = endValue
+          ? parseIcsDate(endValue, allDay, endZone ?? startZone)
+          : new Date(start.getTime() + 60 * 60 * 1000)
+
+        if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null
 
         return {
           id: getProperty(event, 'UID') || `${start.toISOString()}-${title}`,
@@ -82,6 +123,6 @@ export const getGoogleCalendarEvents = async (): Promise<CalendarEvent[]> => {
       })
       .filter((event): event is CalendarEvent => event !== null)
   } catch {
-    return []
+    throw new Error('Evenimentele Google Calendar nu au putut fi încărcate.')
   }
 }

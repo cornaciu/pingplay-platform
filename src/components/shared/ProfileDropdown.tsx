@@ -9,7 +9,7 @@ import { LogOutIcon, SettingsIcon, UserIcon } from 'lucide-react'
 import { logout } from '@/lib/auth'
 
 // Component Imports
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -32,11 +32,17 @@ const ProfileDropdown = ({ user }: { user: ProfileUser }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        render={<Button variant='ghost' size='icon' className='relative rounded-full hover:bg-transparent' />}
+        render={
+          <Button
+            variant='ghost'
+            size='icon'
+            className='relative rounded-full hover:bg-transparent'
+            aria-label='Meniul contului'
+          />
+        }
       >
         <Avatar>
-          <AvatarImage src={user.imageUrl} alt={user.fullName} />
-          <AvatarFallback>{user.initials}</AvatarFallback>
+          <AvatarFallback className='bg-primary/15 text-[#ffacc8]'>{user.initials}</AvatarFallback>
         </Avatar>
         <span className='ring-card absolute right-0 bottom-0 block size-2 rounded-full bg-green-600 ring-2' />
       </DropdownMenuTrigger>
@@ -45,8 +51,7 @@ const ProfileDropdown = ({ user }: { user: ProfileUser }) => {
           <DropdownMenuLabel className='flex items-center gap-4 px-2 py-2.5 font-normal'>
             <div className='relative shrink-0'>
               <Avatar className='size-10'>
-                <AvatarImage src={user.imageUrl} alt={user.fullName} />
-                <AvatarFallback>{user.initials}</AvatarFallback>
+                <AvatarFallback className='bg-primary/15 text-[#ffacc8]'>{user.initials}</AvatarFallback>
               </Avatar>
               <span className='ring-card absolute right-0 bottom-0 block size-2 rounded-full bg-green-600 ring-2' />
             </div>

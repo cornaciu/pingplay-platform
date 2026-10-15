@@ -89,7 +89,7 @@ const OrdersDashboard = async () => {
       <div className='grid grid-cols-1 items-start gap-6 xl:grid-cols-3'>
         <TableAvailabilityPanel />
         {/* Statistics Cards */}
-        <div className='order-1 grid min-w-0 gap-6 xl:col-span-2'>
+        <div className='order-2 col-span-full grid min-w-0 gap-6 lg:grid-cols-2'>
           {DASHBOARD_EVENT_TYPES.map(eventType => {
             const bookingStatsForEventType = bookingStats.bookings.find(item => item.eventType === eventType.value)
             const bookingCount = bookingStatsForEventType?.count
@@ -161,7 +161,7 @@ const OrdersDashboard = async () => {
                         {futureBookingsForEventType?.reservations.map(reservation => (
                           <div
                             key={`${reservation.eventTypeUri}-${reservation.startTime}`}
-                            className='bg-muted/40 border-border/60 grid gap-4 rounded-md border p-4 md:grid-cols-[minmax(0,1fr)_minmax(220px,auto)]'
+                            className='bg-muted/40 border-border/60 grid gap-4 rounded-xl border p-4'
                           >
                             <div className='min-w-0'>
                               <span className='text-foreground flex items-start gap-2 text-base leading-6 font-semibold'>
@@ -173,7 +173,7 @@ const OrdersDashboard = async () => {
                                 {CALENDLY_EVENT_TYPE_LABELS[reservation.eventTypeUri] ?? 'Event type necunoscut'}
                               </span>
                             </div>
-                            <div className='border-border/60 border-t pt-3 text-sm md:border-t-0 md:border-l md:pt-0 md:pl-4'>
+                            <div className='border-border/60 border-t pt-3 text-sm'>
                               <span className='text-foreground block text-base font-semibold'>
                                 {reservation.clientName ?? 'Client necunoscut'}
                               </span>
@@ -212,7 +212,7 @@ const OrdersDashboard = async () => {
               />
             )
           })}
-          <Card className='w-full'>
+          <Card className='col-span-full w-full'>
             <CardHeader>
               <CardTitle>Rezervări curente</CardTitle>
             </CardHeader>
@@ -262,7 +262,7 @@ const OrdersDashboard = async () => {
           </Card>
         </div>
 
-        <div className='order-3 min-w-0 xl:col-span-full'>
+        <div id='creare-rezervare' className='order-3 min-w-0 scroll-mt-24 xl:col-span-full'>
           <CreateReservationCard />
         </div>
 

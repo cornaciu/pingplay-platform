@@ -1,6 +1,9 @@
 import 'server-only'
 
+import type { events as CalendarEventType } from '@/types/apps/calendar-types'
+
 type CalendlyScheduledEvent = {
+  name?: string
   uri: string
   event_type: string
   start_time: string
@@ -383,4 +386,46 @@ export const getCalendlyReservations = async (): Promise<CalendlyReservation[]> 
   } catch {
     return []
   }
+}
+
+// Calendar uses event-level data only: no extra invitee requests per booking.
+export const getCalendlyCalendarEvents = async () => {
+  if (!process.env.CALENDLY_ACCESS_TOKEN) throw new Error('Integrarea Calendly nu este configurată.')
+
+  const groups = getEventTypeIds()
+  const allowedTypes = new Set(Object.values(groups).flat().map(toEventTypeUri))
+
+  if (allowedTypes.size === 0) throw new Error('Tipurile de rezervări Calendly nu sunt configurate.')
+
+  const organization = await getCalendlyOrganization()
+  const now = Date.now()
+
+  const scheduled = await getScheduledEvents(
+    organization,
+    new Date(now - FUTURE_EVENTS_IN_MILLISECONDS).toISOString(),
+    new Date(now + FUTURE_EVENTS_IN_MILLISECONDS).toISOString(),
+    'active'
+  )
+
+  return scheduled
+    .filter(event => allowedTypes.has(event.event_type))
+    .map(event => {
+      const title = event.name || 'Rezervare PINGPLAY'
+
+      const group = Object.entries(groups).find(([, ids]) =>
+        ids.some(id => toEventTypeUri(id) === event.event_type)
+      )?.[0]
+
+      const normalized = `${group ?? ''} ${title}`.toLowerCase()
+
+      const color: CalendarEventType = normalized.includes('ambele')
+        ? 'ambele'
+        : /masa\s*2|nr\.?\s*2/.test(normalized)
+          ? 'masa2'
+          : /masa\s*1/.test(normalized)
+            ? 'business'
+            : 'etc'
+
+      return { id: event.uri, title, start: new Date(event.start_time), end: new Date(event.end_time), color }
+    })
 }

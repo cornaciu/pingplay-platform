@@ -6,7 +6,6 @@ import { Fragment } from 'react'
 import { usePathname } from 'next/navigation'
 
 // Component Imports
-import ModeToggle from '@/components/layout/ModeToggle'
 import ProfileDropdown from '@/components/shared/ProfileDropdown'
 import {
   Breadcrumb,
@@ -32,7 +31,7 @@ const Header = ({ user }: { user: HeaderUser }) => {
   const segments = pathname.split('/').filter(Boolean)
 
   return (
-    <header className='bg-card/85 sticky top-0 z-40 border-b backdrop-blur-xl'>
+    <header className='sticky top-0 z-40 border-b bg-black backdrop-blur-xl'>
       <div className='mx-auto flex max-w-360 items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8'>
         <div className='flex items-center gap-4'>
           <SidebarTrigger className='[&_svg]:size-5!' />
@@ -72,7 +71,6 @@ const Header = ({ user }: { user: HeaderUser }) => {
           </Breadcrumb>
         </div>
         <div className='flex items-center gap-1.5'>
-          <ModeToggle />
           <ProfileDropdown user={user} />
         </div>
       </div>
