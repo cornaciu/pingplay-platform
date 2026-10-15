@@ -11,6 +11,9 @@ import { Toaster } from '@/components/ui/sonner'
 import { requireAuth } from '@/lib/auth'
 import SessionRefresh from '@/components/auth/session-refresh'
 
+// Authenticated pages must be rendered per request, never during a static build.
+export const dynamic = 'force-dynamic'
+
 const PagesLayout = async ({ children }: Readonly<{ children: ReactNode }>) => {
   const user = await requireAuth()
 
