@@ -39,11 +39,11 @@ export function getEventColorClasses(color?: string): string {
     case 'ambele':
       return 'bg-[#fbd75b] text-[#1d1d1d] shadow-[#fbd75b]/20'
     case 'masa2':
-      return 'bg-[#bd7575] text-[#1d1d1d] shadow-[#bd7575]/20'
+      return 'bg-blue-400/20 text-blue-200 shadow-blue-400/10'
     case 'family':
       return 'bg-amber-200/50 text-amber-950/80 dark:bg-amber-400/25 dark:text-amber-200 shadow-amber-700/8'
     case 'business':
-      return 'bg-violet-200/50 text-violet-950/80 dark:bg-violet-400/25 dark:text-violet-200 shadow-violet-700/8'
+      return 'bg-emerald-400/20 text-emerald-200 shadow-emerald-400/10'
     case 'personal':
       return 'bg-rose-200/50 text-rose-950/80 dark:bg-rose-400/25 dark:text-rose-200 shadow-rose-700/8'
     case 'holiday':

@@ -157,12 +157,13 @@ const TableAvailabilityPanel = () => {
   }, [])
 
   return (
-    <Card className='h-full w-full lg:col-span-1'>
+    <Card className='order-1 col-span-full w-full min-w-0'>
       <CardHeader>
-        <p className='text-foreground mb-3 text-base font-semibold'>Control mese</p>
+        <p className='text-foreground text-lg font-semibold tracking-tight'>Control locație</p>
+        <p className='text-muted-foreground text-xs'>Comenzi rapide pentru mese și echipamente</p>
       </CardHeader>
-      <CardContent className='flex flex-1 flex-col justify-between gap-4 [&_button]:h-12'>
-        <div className='flex flex-col gap-2'>
+      <CardContent className='grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4 [&_button]:h-auto [&_button]:min-h-11 [&_button]:py-2 [&_button]:whitespace-normal'>
+        <div className='col-span-full grid gap-3 sm:grid-cols-2'>
           {(
             [
               { key: 'masa1', label: 'MASA 1' },
@@ -174,7 +175,7 @@ const TableAvailabilityPanel = () => {
             return (
               <div
                 key={table.key}
-                className='border-border relative flex flex-col items-stretch gap-3 rounded-md border p-3 sm:flex-row sm:items-center sm:justify-between'
+                className='border-border bg-muted/30 relative flex flex-col items-stretch gap-3 rounded-xl border p-3'
               >
                 {cooldownTarget === table.key && cooldowns[table.key] > 0 && (
                   <div className='bg-background/90 absolute inset-0 z-10 flex items-center justify-center rounded-md backdrop-blur-sm'>
@@ -191,7 +192,7 @@ const TableAvailabilityPanel = () => {
                   )}
                   <span className='font-medium'>{table.label}</span>
                 </div>
-                <div className='grid w-full gap-2 sm:w-auto sm:grid-cols-2'>
+                <div className='grid w-full grid-cols-2 gap-2'>
                   <Button
                     variant='outline'
                     size='sm'
@@ -231,7 +232,7 @@ const TableAvailabilityPanel = () => {
             disabled={isPending || hasCooldown}
           >
             <CheckCircle2Icon />
-            Deschide ambele mese
+            Deschide ambele
           </Button>
           <Button
             variant='destructive'
@@ -239,7 +240,7 @@ const TableAvailabilityPanel = () => {
             disabled={isPending || hasCooldown}
           >
             <LockKeyholeIcon />
-            Închide ambele mese
+            Închide ambele
           </Button>
         </div>
 
@@ -253,11 +254,11 @@ const TableAvailabilityPanel = () => {
               disabled={isLightsAndTvPending}
             >
               <PowerIcon />
-              Aprinde lumina și TV
+              Aprinde
             </Button>
             <Button variant='destructive' onClick={() => updateLightsAndTv('off')} disabled={isLightsAndTvPending}>
               <PowerIcon />
-              Stinge lumina și TV
+              Stinge
             </Button>
           </div>
         </div>

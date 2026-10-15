@@ -1,62 +1,48 @@
-// React Imports
-import { Suspense } from 'react'
+import Link from 'next/link'
+import { MailIcon, SettingsIcon } from 'lucide-react'
 
-// Third-party Imports
-import { BriefcaseBusinessIcon, CalendarDaysIcon, MapPinIcon, UserRoundCheckIcon } from 'lucide-react'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { requireAuth } from '@/lib/auth'
 
-// Component Imports
-import { Avatar, AvatarImage } from '@/components/ui/avatar'
-import { BackgroundRippleEffect } from '@/components/ui/background-ripple'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import UserProfileTabs from '@/views/pages/user-profile/user-profile-tabs'
+const UserProfile = async () => {
+  const user = await requireAuth()
 
-const UserProfile = () => {
   return (
-    <div>
-      <div className='mb-4 md:mb-6 lg:mb-10'>
-        <Card className='py-0 pb-6'>
-          <div className='bg-muted relative h-44 overflow-hidden'>
-            <div className='absolute inset-0'>
-              <BackgroundRippleEffect cellSize={45} rows={8} activeSquares={18} cols={45} />
-            </div>
-          </div>
-
-          <CardContent>
-            <div className='flex items-end gap-4 pb-1 max-md:flex-col max-md:items-center md:flex-nowrap md:gap-6'>
-              <Avatar className='ring-card z-3 -mt-12 size-28 rounded-md ring-4 after:rounded-[inherit] md:-mt-14'>
-                <AvatarImage src='/images/avatars/avatar-1.webp' alt='John Doe' className='rounded-[inherit]' />
-              </Avatar>
-
-              <div className='min-w-0 flex-1 space-y-2 text-center md:text-left'>
-                <h2 className='text-2xl font-medium'>John Doe</h2>
-                <div className='text-muted-foreground flex flex-wrap items-center gap-x-6 gap-y-2 max-md:justify-center'>
-                  <span className='inline-flex items-center gap-2'>
-                    <BriefcaseBusinessIcon className='size-4.5' />
-                    UX Designer
-                  </span>
-                  <span className='inline-flex items-center gap-2'>
-                    <MapPinIcon className='size-4.5' />
-                    India
-                  </span>
-                  <span className='inline-flex items-center gap-2'>
-                    <CalendarDaysIcon className='size-4.5' />
-                    April 2021
-                  </span>
-                </div>
-              </div>
-
-              <Button className='md:ml-auto md:self-end'>
-                <UserRoundCheckIcon className='size-4' />
-                Connected
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+    <div className='space-y-6'>
+      <div>
+        <p className='text-primary mb-2 text-xs font-semibold tracking-widest uppercase'>Contul tău</p>
+        <h1 className='text-3xl font-semibold tracking-tight'>Profil</h1>
       </div>
-      <Suspense>
-        <UserProfileTabs />
-      </Suspense>
+      <Card>
+        <CardContent className='flex flex-wrap items-center gap-5'>
+          <Avatar className='size-20'>
+            <AvatarFallback className='bg-primary/15 text-2xl font-semibold text-[#ffacc8]'>
+              {user.initials}
+            </AvatarFallback>
+          </Avatar>
+          <div className='min-w-0'>
+            <h2 className='text-2xl font-semibold'>{user.fullName}</h2>
+            <p className='text-muted-foreground mt-2 flex items-center gap-2 break-all'>
+              <MailIcon className='size-4 shrink-0' />
+              {user.email}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Setările contului</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Link
+            href='/pages/user-settings?setting=general'
+            className='hover:bg-accent inline-flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium'
+          >
+            <SettingsIcon className='text-primary size-4' /> Deschide setările
+          </Link>
+        </CardContent>
+      </Card>
     </div>
   )
 }

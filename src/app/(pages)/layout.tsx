@@ -11,6 +11,9 @@ import { Toaster } from '@/components/ui/sonner'
 import { requireAuth } from '@/lib/auth'
 import SessionRefresh from '@/components/auth/session-refresh'
 
+// Authenticated pages must be rendered per request, never during a static build.
+export const dynamic = 'force-dynamic'
+
 const PagesLayout = async ({ children }: Readonly<{ children: ReactNode }>) => {
   const user = await requireAuth()
 
@@ -20,9 +23,9 @@ const PagesLayout = async ({ children }: Readonly<{ children: ReactNode }>) => {
       <Suspense>
         <Sidebar />
       </Suspense>
-      <SidebarInset className='flex flex-1 flex-col'>
+      <SidebarInset className='bg-background flex min-w-0 flex-1 flex-col'>
         <Header user={user} />
-        <main className='mx-auto size-full max-w-360 flex-1 px-4 py-6 sm:px-6'>{children}</main>
+        <main className='mx-auto size-full max-w-360 flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8'>{children}</main>
         <Toaster />
         <Footer />
       </SidebarInset>

@@ -56,13 +56,13 @@ interface PositionedEvent {
 
 export function WeekView({ currentDate, events, onEventSelect, onEventCreate }: WeekViewProps) {
   const days = useMemo(() => {
-    const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 })
-    const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 })
+    const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 })
+    const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 })
 
     return eachDayOfInterval({ start: weekStart, end: weekEnd })
   }, [currentDate])
 
-  const weekStart = useMemo(() => startOfWeek(currentDate, { weekStartsOn: 0 }), [currentDate])
+  const weekStart = useMemo(() => startOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate])
 
   const hours = useMemo(() => {
     const dayStart = startOfDay(currentDate)
@@ -297,7 +297,7 @@ export function WeekView({ currentDate, events, onEventSelect, onEventCreate }: 
             >
               {index > 0 && (
                 <span className='bg-background text-muted-foreground/70 absolute -top-3 left-0 flex h-6 w-16 max-w-full items-center justify-end pe-2 text-[10px] sm:pe-4 sm:text-xs'>
-                  {format(hour, 'h a')}
+                  {format(hour, 'HH:mm')}
                 </span>
               )}
             </div>

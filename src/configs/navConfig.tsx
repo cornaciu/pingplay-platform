@@ -50,14 +50,14 @@ const allNavItems: NavItem[] = [
   {
     items: [
       {
-        icon: 'CalendarCheck',
+        icon: 'LayoutDashboard',
         label: 'Privire de ansamblu',
         href: '/dashboard/rezervari'
       }
     ]
   },
   {
-    groupLabel: '',
+    groupLabel: 'Administrare',
     items: [
       {
         icon: 'CalendarCheck2',
@@ -73,8 +73,8 @@ const allNavItems: NavItem[] = [
         icon: 'UsersIcon',
         label: 'Clienți',
         childItems: [
-          { label: 'List', href: '/apps/users/list' },
-          { label: 'View', href: '/apps/users/view' }
+          { label: 'Listă', href: '/apps/users/list' },
+          { label: 'Detalii', href: '/apps/users/view' }
         ]
       },
       {
@@ -85,18 +85,18 @@ const allNavItems: NavItem[] = [
     ]
   },
   {
-    groupLabel: '',
+    groupLabel: 'Administrare',
     items: [
       {
         icon: 'UserIcon',
-        label: 'User Profile',
+        label: 'Profil utilizator',
         childItems: [
           {
-            label: 'Profile',
+            label: 'Profil',
             href: '/pages/user-profile?view=profile'
           },
           {
-            label: 'Connections',
+            label: 'Conexiuni',
             href: '/pages/user-profile?view=connections'
           }
         ]

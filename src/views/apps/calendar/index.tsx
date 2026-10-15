@@ -1,8 +1,11 @@
 'use client'
 
-
 // React Imports
 import { useEffect, useMemo, useState } from 'react'
+
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { ro } from 'date-fns/locale'
 
 // Third-party Imports
 import {
@@ -16,11 +19,20 @@ import {
   subMonths,
   subWeeks
 } from 'date-fns'
-import { CalendarCheckIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon } from 'lucide-react'
+import {
+  CalendarCheckIcon,
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  PlusIcon,
+  RefreshCwIcon
+} from 'lucide-react'
 
 import type { CalendarEvent, CalendarView } from '@/types/apps/calendar-types'
 
 // Component Imports
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -43,9 +55,14 @@ export interface EventCalendarProps {
   className?: string
   initialView?: CalendarView
   events?: CalendarEvent[]
+  error?: string
+  notice?: string
 }
 
-export function EventCalendar({ className, initialView = 'month', events = [] }: EventCalendarProps) {
+export function EventCalendar({ className, initialView = 'month', events = [], error, notice }: EventCalendarProps) {
+  const router = useRouter()
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
+  const createHref = '/dashboard/rezervari#creare-rezervare'
   const [currentDate, setCurrentDate] = useState(() => new Date())
   const [view, setView] = useState<CalendarView>(initialView)
 
@@ -75,17 +92,29 @@ export function EventCalendar({ className, initialView = 'month', events = [] }:
   }, [])
 
   const viewTitle = useMemo(() => {
-    if (view === 'month') return format(currentDate, 'MMMM yyyy')
-    if (view === 'day') return format(currentDate, 'EEE MMMM d, yyyy')
+    if (view === 'month') return format(currentDate, 'MMMM yyyy', { locale: ro })
+    if (view === 'day') return format(currentDate, 'EEEE, d MMMM yyyy', { locale: ro })
 
-    const start = startOfWeek(currentDate, { weekStartsOn: 0 })
-    const end = endOfWeek(currentDate, { weekStartsOn: 0 })
+    const start = startOfWeek(currentDate, { weekStartsOn: 1 })
+    const end = endOfWeek(currentDate, { weekStartsOn: 1 })
 
-    return isSameMonth(start, end) ? format(start, 'MMMM yyyy') : `${format(start, 'MMM')} - ${format(end, 'MMM yyyy')}`
+    return isSameMonth(start, end)
+      ? format(start, 'MMMM yyyy', { locale: ro })
+      : `${format(start, 'MMM', { locale: ro })} - ${format(end, 'MMM yyyy', { locale: ro })}`
   }, [currentDate, view])
 
   return (
     <div className={cn('bg-card flex flex-col rounded-lg border', className)}>
+      {error && (
+        <p role='alert' className='border-destructive/40 text-destructive m-4 rounded-xl border p-4 text-sm'>
+          {error}
+        </p>
+      )}
+      {notice && (
+        <p role='status' className='text-muted-foreground m-4 rounded-xl border p-4 text-sm'>
+          {notice}
+        </p>
+      )}
       <div
         className='flex flex-col has-data-[slot=month-view]:flex-1'
         style={
@@ -96,60 +125,111 @@ export function EventCalendar({ className, initialView = 'month', events = [] }:
           } as React.CSSProperties
         }
       >
-        <div className='flex items-center justify-between gap-1 p-2 sm:p-4'>
+        <div className='flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4'>
           <div className='flex items-center gap-1'>
-            <Button className='max-sm:hidden'>
+            <Link
+              href={createHref}
+              className='bg-primary text-primary-foreground inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium hover:opacity-90'
+            >
               <PlusIcon size={16} aria-hidden='true' />
-              <span>New event</span>
+              <span>Rezervare</span>
+            </Link>
+            <Button variant='ghost' size='icon' onClick={() => router.refresh()} aria-label='Reîncarcă rezervările'>
+              <RefreshCwIcon className='size-4' />
             </Button>
-            <Button size='icon-sm' className='sm:hidden' aria-label='New event'>
-              <PlusIcon size={16} aria-hidden='true' />
-            </Button>
-            <Button variant='outline' className='max-sm:hidden' onClick={goToToday}>
+            <Button variant='outline' onClick={goToToday}>
               <CalendarCheckIcon size={16} aria-hidden='true' />
-              <span>Today</span>
+              <span>Azi</span>
             </Button>
           </div>
           <div className='flex items-center gap-1'>
-            <Button variant='ghost' size='icon-sm' onClick={goToPrevious} aria-label='Previous'>
+            <Button variant='ghost' size='icon-sm' onClick={goToPrevious} aria-label='Perioada anterioară'>
               <ChevronLeftIcon size={16} />
             </Button>
             <h2 className='text-center text-sm font-semibold sm:text-lg'>{viewTitle}</h2>
-            <Button variant='ghost' size='icon-sm' onClick={goToNext} aria-label='Next'>
+            <Button variant='ghost' size='icon-sm' onClick={goToNext} aria-label='Perioada următoare'>
               <ChevronRightIcon size={16} />
             </Button>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger render={<Button variant='outline' className='max-sm:h-8!' />}>
-              <span className='sm:hidden'>{view[0].toUpperCase()}</span>
-              <span className='max-sm:sr-only'>{view[0].toUpperCase() + view.slice(1)}</span>
+              <span className='sm:hidden'>{{ month: 'L', week: 'S', day: 'Z' }[view]}</span>
+              <span className='max-sm:sr-only'>{{ month: 'Lună', week: 'Săptămână', day: 'Zi' }[view]}</span>
               <ChevronDownIcon size={16} />
             </DropdownMenuTrigger>
             <DropdownMenuContent align='end'>
               <DropdownMenuItem onClick={() => setView('month')}>
-                Month <DropdownMenuShortcut>M</DropdownMenuShortcut>
+                Lună <DropdownMenuShortcut>M</DropdownMenuShortcut>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setView('week')}>
-                Week <DropdownMenuShortcut>W</DropdownMenuShortcut>
+                Săptămână <DropdownMenuShortcut>W</DropdownMenuShortcut>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setView('day')}>
-                Day <DropdownMenuShortcut>D</DropdownMenuShortcut>
+                Zi <DropdownMenuShortcut>D</DropdownMenuShortcut>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        {!error && events.length === 0 && (
+          <p role='status' className='text-muted-foreground px-4 pb-4 text-sm'>
+            Nu sunt rezervări în sursa calendarului.
+          </p>
+        )}
         <div className='flex flex-1 flex-col'>
           {view === 'month' && (
-            <MonthView currentDate={currentDate} events={events} onEventSelect={() => {}} onEventCreate={() => {}} />
+            <MonthView
+              currentDate={currentDate}
+              events={events}
+              onEventSelect={setSelectedEvent}
+              onEventCreate={() => router.push(createHref)}
+            />
           )}
           {view === 'week' && (
-            <WeekView currentDate={currentDate} events={events} onEventSelect={() => {}} onEventCreate={() => {}} />
+            <WeekView
+              currentDate={currentDate}
+              events={events}
+              onEventSelect={setSelectedEvent}
+              onEventCreate={() => router.push(createHref)}
+            />
           )}
           {view === 'day' && (
-            <DayView currentDate={currentDate} events={events} onEventSelect={() => {}} onEventCreate={() => {}} />
+            <DayView
+              currentDate={currentDate}
+              events={events}
+              onEventSelect={setSelectedEvent}
+              onEventCreate={() => router.push(createHref)}
+            />
           )}
         </div>
       </div>
+      <Dialog
+        open={selectedEvent !== null}
+        onOpenChange={open => {
+          if (!open) setSelectedEvent(null)
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selectedEvent?.title}</DialogTitle>
+            <DialogDescription>Detaliile rezervării</DialogDescription>
+          </DialogHeader>
+          {selectedEvent && (
+            <div className='space-y-3 text-sm'>
+              <p>
+                {format(new Date(selectedEvent.start), 'dd MMMM yyyy, HH:mm', { locale: ro })} –{' '}
+                {format(new Date(selectedEvent.end), 'dd MMMM yyyy, HH:mm', { locale: ro })}
+              </p>
+              {selectedEvent.description && (
+                <p className='text-muted-foreground break-words whitespace-pre-wrap'>{selectedEvent.description}</p>
+              )}
+              {selectedEvent.location && <p>{selectedEvent.location}</p>}
+              <Link href='/apps/reservations' className='inline-block text-[#ffacc8] underline underline-offset-4'>
+                Gestionează rezervările
+              </Link>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

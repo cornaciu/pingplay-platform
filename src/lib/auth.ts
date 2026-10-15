@@ -135,7 +135,7 @@ export const requireAuth = async () => {
   return {
     fullName: user.name,
     email: user.email,
-    imageUrl: '/images/avatars/avatar-1.webp',
+    imageUrl: '',
     initials: user.name
       .split(/\s+/)
       .filter(Boolean)

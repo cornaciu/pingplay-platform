@@ -3,6 +3,8 @@
 // React Imports
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 
+import { ro } from 'date-fns/locale'
+
 // Third-party Imports
 import {
   addDays,
@@ -45,17 +47,17 @@ export function MonthView({ currentDate, events, onEventSelect, onEventCreate }:
   const days = useMemo(() => {
     const monthStart = startOfMonth(currentDate)
     const monthEnd = endOfMonth(monthStart)
-    const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 })
-    const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 })
+    const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 })
+    const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 })
 
     return eachDayOfInterval({ start: calendarStart, end: calendarEnd })
   }, [currentDate])
 
   const weekdays = useMemo(() => {
     return Array.from({ length: 7 }).map((_, i) => {
-      const date = addDays(startOfWeek(new Date()), i)
+      const date = addDays(startOfWeek(new Date(), { weekStartsOn: 1 }), i)
 
-      return format(date, 'EEE')
+      return format(date, 'EEE', { locale: ro })
     })
   }, [])
 

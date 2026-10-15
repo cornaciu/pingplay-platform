@@ -474,11 +474,18 @@ const SidebarLayout = () => {
   return (
     <Sidebar collapsible='icon' variant='sidebar'>
       <SidebarHeader>
+        <span className='text-muted-foreground px-2 text-[10px] font-semibold tracking-[0.22em] group-data-[collapsible=icon]:hidden'>
+          WORKSPACE
+        </span>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size='lg' className='bg-transparent! [&_img]:h-10'>
+            <Link
+              href='/dashboard/rezervari'
+              aria-label='PINGPLAY, privire de ansamblu'
+              className='focus-visible:outline-ring flex min-h-12 items-center rounded-lg focus-visible:outline-2'
+            >
               <Logo />
-            </SidebarMenuButton>
+            </Link>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
