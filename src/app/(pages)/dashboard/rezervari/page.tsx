@@ -2,7 +2,6 @@ import Link from 'next/link'
 
 import { CalendarClockIcon, CalendarDaysIcon, MailIcon, PhoneIcon, TagIcon } from 'lucide-react'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cancelCalendlyReservation } from '@/app/server/actions'
 import { getCalendlyBookingsLast30Days, getCalendlyCurrentBookings, getCalendlyFutureBookings } from '@/lib/calendly'
@@ -10,8 +9,7 @@ import { getStripeRevenueLast30Days } from '@/lib/stripe'
 
 import SalesMetricsCard from '@/views/dashboards/charts/chart-sales-metrics'
 import CreateReservationCard from '@/views/dashboards/rezervari/create-reservation-card'
-import TableAvailabilityPanel from '@/views/dashboards/rezervari/table-availability-panel'
-import ThermostatPanel from '@/views/dashboards/rezervari/thermostat-panel'
+import RoomOverview from '@/views/dashboards/rezervari/room-overview'
 import StatisticsCard from '@/views/dashboards/statistics/statistics-card-01'
 
 const DASHBOARD_EVENT_TYPES = [
@@ -61,18 +59,10 @@ const OrdersDashboard = async () => {
     getStripeRevenueLast30Days()
   ])
 
-  const currentReservations = currentBookings
-    .flatMap(({ eventType, bookings }) =>
-      (bookings?.reservations ?? []).map(reservation => ({
-        ...reservation,
-        table: DASHBOARD_EVENT_TYPES.find(item => item.value === eventType)?.label ?? eventType
-      }))
-    )
-    .sort((first, second) => new Date(first.startTime).getTime() - new Date(second.startTime).getTime())
-
   return (
     <div className='space-y-6'>
-      <div className='flex flex-wrap items-end justify-between gap-4'>
+      <h1 className='sr-only md:hidden'>Privire de ansamblu</h1>
+      <div className='hidden flex-wrap items-end justify-between gap-4 md:flex'>
         <div>
           <p className='text-primary mb-2 text-xs font-semibold tracking-[0.18em] uppercase'>PINGPLAY · Administrare</p>
           <h1 className='text-3xl font-semibold tracking-tight sm:text-4xl'>Privire de ansamblu</h1>
@@ -88,8 +78,13 @@ const OrdersDashboard = async () => {
         </Link>
       </div>
       <div className='grid grid-cols-1 items-start gap-6 xl:grid-cols-3'>
-        <TableAvailabilityPanel />
-        <ThermostatPanel />
+        <div className='order-1 col-span-full min-w-0'>
+          <RoomOverview
+            currentBookings={currentBookings}
+            futureBookings={futureBookings}
+            eventTypeLabels={CALENDLY_EVENT_TYPE_LABELS}
+          />
+        </div>
         {/* Statistics Cards */}
         <div className='order-2 col-span-full grid min-w-0 gap-6 lg:grid-cols-2'>
           {DASHBOARD_EVENT_TYPES.map(eventType => {
@@ -214,54 +209,6 @@ const OrdersDashboard = async () => {
               />
             )
           })}
-          <Card className='col-span-full w-full'>
-            <CardHeader>
-              <CardTitle>Rezervări curente</CardTitle>
-            </CardHeader>
-            <CardContent className='w-full'>
-              <div className='grid w-full min-w-0 gap-3'>
-                {currentReservations.map(reservation => (
-                  <div
-                    key={`${reservation.table}-${reservation.eventTypeUri}-${reservation.startTime}`}
-                    className='bg-muted/40 border-border/60 grid w-full min-w-0 gap-3 rounded-md border p-4 sm:grid-cols-[minmax(0,1fr)_minmax(180px,auto)]'
-                  >
-                    <div className='min-w-0'>
-                      <div className='flex flex-wrap items-center gap-x-3 gap-y-1'>
-                        <span className='text-foreground flex items-center gap-1.5 font-semibold'>
-                          <CalendarDaysIcon className='text-primary size-4 shrink-0' />
-                          {formatBookingDate(reservation.startTime)}
-                        </span>
-                      </div>
-                      <span className='text-muted-foreground mt-2 flex items-center gap-1.5 truncate text-sm'>
-                        <TagIcon className='size-3.5 shrink-0' />
-                        {CALENDLY_EVENT_TYPE_LABELS[reservation.eventTypeUri] ?? 'Event type necunoscut'}
-                      </span>
-                    </div>
-                    <div className='border-border/60 text-sm sm:border-l sm:pl-4'>
-                      <span className='text-foreground block font-semibold'>
-                        {reservation.clientName ?? 'Client necunoscut'}
-                      </span>
-                      {reservation.clientEmail && (
-                        <span className='text-muted-foreground mt-1 flex items-center gap-1.5'>
-                          <MailIcon className='size-3.5 shrink-0' />
-                          <span className='max-w-52 truncate'>{reservation.clientEmail}</span>
-                        </span>
-                      )}
-                      {reservation.clientPhone && (
-                        <span className='text-muted-foreground flex items-center gap-1.5'>
-                          <PhoneIcon className='size-3.5 shrink-0' />
-                          {reservation.clientPhone}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {currentReservations.length === 0 && (
-                  <p className='text-muted-foreground text-sm'>Nu există rezervări curente.</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         <div id='creare-rezervare' className='order-3 min-w-0 scroll-mt-24 xl:col-span-full'>

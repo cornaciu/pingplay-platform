@@ -53,6 +53,11 @@ const allNavItems: NavItem[] = [
         icon: 'LayoutDashboard',
         label: 'Privire de ansamblu',
         href: '/dashboard/rezervari'
+      },
+      {
+        icon: 'SlidersHorizontalIcon',
+        label: 'Control locație',
+        href: '/dashboard/control'
       }
     ]
   },

@@ -4,17 +4,10 @@ import { useEffect, useState, useTransition } from 'react'
 
 import { toast } from 'sonner'
 
-import {
-  AirVentIcon,
-  BatteryMediumIcon,
-  CheckCircle2Icon,
-  LockKeyholeIcon,
-  PowerIcon,
-  UnlockKeyholeIcon
-} from 'lucide-react'
+import { AirVentIcon, BatteryMediumIcon, LightbulbIcon, LockKeyholeIcon, UnlockKeyholeIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
 import {
   controlAirConditioner,
   controlDoor,
@@ -23,9 +16,49 @@ import {
   getDoorStatus
 } from '@/app/server/actions'
 
+const tileClassName = 'bg-card relative flex flex-col gap-3 rounded-2xl border p-4'
+const sectionLabelClassName = 'text-muted-foreground text-xs font-semibold tracking-[0.14em] uppercase'
+
+// Same open/close buttons for every table; only the table label carries its colour.
+const OpenCloseButtons = ({
+  onOpen,
+  onClose,
+  disabled,
+  openLabel = 'Deschide',
+  closeLabel = 'Închide'
+}: {
+  onOpen: () => void
+  onClose: () => void
+  disabled: boolean
+  openLabel?: string
+  closeLabel?: string
+}) => (
+  <div className='bg-muted grid grid-cols-2 gap-1.5 rounded-xl p-1'>
+    <Button className='h-11 rounded-lg' onClick={onOpen} disabled={disabled}>
+      {openLabel}
+    </Button>
+    <Button variant='ghost' className='bg-background/60 h-11 rounded-lg' onClick={onClose} disabled={disabled}>
+      {closeLabel}
+    </Button>
+  </div>
+)
+
+const CooldownOverlay = ({ seconds }: { seconds: number }) => (
+  <div className='bg-background/90 absolute inset-0 z-10 flex items-center justify-center rounded-2xl px-4 text-center backdrop-blur-sm'>
+    <span className='text-muted-foreground text-sm font-medium' role='status'>
+      Poți efectua o nouă acțiune peste {seconds}s.
+    </span>
+  </div>
+)
+
 const TableAvailabilityPanel = () => {
   const cooldownSeconds = 26
-  const [tableStatus, setTableStatus] = useState({ masa1: true, masa2: true })
+
+  // Unknown until a command is sent from this page: the table relays do not report their state.
+  const [tableStatus, setTableStatus] = useState<Record<'masa1' | 'masa2', boolean | null>>({
+    masa1: null,
+    masa2: null
+  })
 
   const [cooldowns, setCooldowns] = useState({ masa1: 0, masa2: 0 })
   const [cooldownTarget, setCooldownTarget] = useState<'masa1' | 'masa2' | 'Ambele' | null>(null)
@@ -157,179 +190,134 @@ const TableAvailabilityPanel = () => {
   }, [])
 
   return (
-    <Card className='order-1 col-span-full w-full min-w-0'>
-      <CardHeader>
-        <p className='text-foreground text-lg font-semibold tracking-tight'>Control locație</p>
-        <p className='text-muted-foreground text-xs'>Comenzi rapide pentru mese și echipamente</p>
-      </CardHeader>
-      <CardContent className='grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4 [&_button]:h-auto [&_button]:min-h-11 [&_button]:py-2 [&_button]:whitespace-normal'>
-        <div className='col-span-full grid gap-3 sm:grid-cols-2'>
+    <div className='flex min-w-0 flex-col gap-4'>
+      <section className='flex flex-col gap-3' aria-labelledby='control-mese'>
+        <h2 id='control-mese' className={sectionLabelClassName}>
+          Mese
+        </h2>
+        <div className='grid grid-cols-1 gap-3 min-[420px]:grid-cols-2'>
           {(
             [
-              { key: 'masa1', label: 'MASA 1' },
-              { key: 'masa2', label: 'MASA 2' }
+              { key: 'masa1', label: 'Masa 1', dotClassName: 'bg-emerald-400', textClassName: 'text-emerald-300' },
+              { key: 'masa2', label: 'Masa 2', dotClassName: 'bg-blue-400', textClassName: 'text-blue-300' }
             ] as const
           ).map(table => {
             const isOpen = tableStatus[table.key]
 
             return (
-              <div
-                key={table.key}
-                className='border-border bg-muted/30 relative flex flex-col items-stretch gap-3 rounded-xl border p-3'
-              >
+              <div key={table.key} className={tileClassName}>
                 {cooldownTarget === table.key && cooldowns[table.key] > 0 && (
-                  <div className='bg-background/90 absolute inset-0 z-10 flex items-center justify-center rounded-md backdrop-blur-sm'>
-                    <span className='text-muted-foreground text-sm font-medium'>
-                      Poți efectua o nouă acțiune peste {cooldowns[table.key]}s.
-                    </span>
-                  </div>
+                  <CooldownOverlay seconds={cooldowns[table.key]} />
                 )}
-                <div className='flex min-w-0 items-center gap-2'>
-                  {isOpen ? (
-                    <UnlockKeyholeIcon className='size-4 shrink-0 text-emerald-600 dark:text-emerald-400' />
-                  ) : (
-                    <LockKeyholeIcon className='text-destructive size-4 shrink-0' />
-                  )}
-                  <span className='font-medium'>{table.label}</span>
-                </div>
-                <div className='grid w-full grid-cols-2 gap-2'>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    className='w-full border-emerald-600/50 text-emerald-700 hover:bg-emerald-600/10 dark:text-emerald-400'
-                    onClick={() => updateTable(table.key, true)}
-                    disabled={isPending || cooldowns[table.key] > 0}
+                <div className='flex items-center justify-between gap-2'>
+                  <span
+                    className={cn(
+                      'flex items-center gap-2 text-xs font-bold tracking-[0.14em] uppercase',
+                      table.textClassName
+                    )}
                   >
-                    Deschide
-                  </Button>
-                  <Button
-                    variant='destructive'
-                    size='sm'
-                    className='w-full'
-                    onClick={() => updateTable(table.key, false)}
-                    disabled={isPending || cooldowns[table.key] > 0}
-                  >
-                    Închide
-                  </Button>
+                    <span className={cn('size-2.5 rounded-full', table.dotClassName)} aria-hidden='true' />
+                    {table.label}
+                  </span>
+                  {isOpen !== null && <span className='text-xs font-semibold'>{isOpen ? 'Deschisă' : 'Închisă'}</span>}
                 </div>
+                <OpenCloseButtons
+                  onOpen={() => updateTable(table.key, true)}
+                  onClose={() => updateTable(table.key, false)}
+                  disabled={isPending || cooldowns[table.key] > 0}
+                />
               </div>
             )
           })}
         </div>
+        <div className={tileClassName}>
+          {cooldownTarget === 'Ambele' && hasCooldown && <CooldownOverlay seconds={displayedCooldown} />}
+          <span className='text-xs font-bold tracking-[0.14em] uppercase'>Ambele mese</span>
+          <OpenCloseButtons
+            onOpen={() => updateTable('Ambele', true)}
+            onClose={() => updateTable('Ambele', false)}
+            disabled={isPending || hasCooldown}
+            openLabel='Deschide ambele'
+            closeLabel='Închide ambele'
+          />
+        </div>
+      </section>
 
-        <div className='border-border relative grid gap-2 border-t pt-4 sm:grid-cols-2'>
-          {cooldownTarget === 'Ambele' && hasCooldown && (
-            <div className='bg-background/90 absolute inset-0 z-10 flex items-center justify-center rounded-md backdrop-blur-sm'>
-              <span className='text-muted-foreground text-center text-sm font-medium'>
-                Poți efectua o nouă acțiune peste {displayedCooldown}s.
+      <section className='flex flex-col gap-3' aria-labelledby='control-echipamente'>
+        <h2 id='control-echipamente' className={sectionLabelClassName}>
+          Echipamente
+        </h2>
+        <div className='grid grid-cols-1 gap-3 min-[420px]:grid-cols-2'>
+          <div className={tileClassName}>
+            <span className='flex items-center gap-2 font-semibold'>
+              <LightbulbIcon className='text-muted-foreground size-5' aria-hidden='true' />
+              Lumină și TV
+            </span>
+            <OpenCloseButtons
+              onOpen={() => updateLightsAndTv('on')}
+              onClose={() => updateLightsAndTv('off')}
+              disabled={isLightsAndTvPending}
+              openLabel='Aprinde'
+              closeLabel='Stinge'
+            />
+          </div>
+          <div className={tileClassName}>
+            <span className='flex items-center gap-2 font-semibold'>
+              <AirVentIcon className='text-muted-foreground size-5' aria-hidden='true' />
+              Climă
+            </span>
+            <OpenCloseButtons
+              onOpen={() => updateAirConditioner('on')}
+              onClose={() => updateAirConditioner('off')}
+              disabled={isAirConditionerPending}
+              openLabel={isAirConditionerPending ? 'Se trimite...' : 'Pornește'}
+              closeLabel={isAirConditionerPending ? 'Se trimite...' : 'Oprește'}
+            />
+            {airConditionerError && <p className='text-destructive text-sm'>{airConditionerError}</p>}
+          </div>
+        </div>
+      </section>
+
+      <section className='flex flex-col gap-3' aria-labelledby='control-usa'>
+        <h2 id='control-usa' className={sectionLabelClassName}>
+          Ușă
+        </h2>
+        <div className={tileClassName}>
+          {isDoorPending && (
+            <div className='bg-background/90 absolute inset-0 z-10 flex items-center justify-center rounded-2xl px-4 text-center backdrop-blur-sm'>
+              <span className='text-muted-foreground text-sm font-medium' role='status' aria-live='polite'>
+                Se așteaptă răspunsul de la Nuki...
               </span>
             </div>
           )}
-          <Button
-            variant='outline'
-            className='border-emerald-600/50 text-emerald-700 hover:bg-emerald-600/10 dark:text-emerald-400'
-            onClick={() => updateTable('Ambele', true)}
-            disabled={isPending || hasCooldown}
-          >
-            <CheckCircle2Icon />
-            Deschide ambele
-          </Button>
-          <Button
-            variant='destructive'
-            onClick={() => updateTable('Ambele', false)}
-            disabled={isPending || hasCooldown}
-          >
-            <LockKeyholeIcon />
-            Închide ambele
-          </Button>
-        </div>
-
-        <div className='border-border border-t pt-4'>
-          <p className='text-foreground mb-3 text-base font-semibold'>Control lumină și TV</p>
-          <div className='grid gap-2 sm:grid-cols-2'>
-            <Button
-              variant='outline'
-              className='border-emerald-600/50 text-emerald-700 hover:bg-emerald-600/10 dark:text-emerald-400'
-              onClick={() => updateLightsAndTv('on')}
-              disabled={isLightsAndTvPending}
-            >
-              <PowerIcon />
-              Aprinde
-            </Button>
-            <Button variant='destructive' onClick={() => updateLightsAndTv('off')} disabled={isLightsAndTvPending}>
-              <PowerIcon />
-              Stinge
-            </Button>
-          </div>
-        </div>
-
-        <div className='border-border border-t pt-4'>
-          <p className='text-foreground mb-3 text-base font-semibold'>Control climă</p>
-          <div className='grid gap-2 sm:grid-cols-2'>
-            <Button
-              variant='outline'
-              className='border-emerald-600/50 text-emerald-700 hover:bg-emerald-600/10 dark:text-emerald-400'
-              onClick={() => updateAirConditioner('on')}
-              disabled={isAirConditionerPending}
-            >
-              <AirVentIcon />
-              {isAirConditionerPending ? 'Se procesează...' : 'Pornește clima'}
-            </Button>
-            <Button
-              variant='destructive'
-              onClick={() => updateAirConditioner('off')}
-              disabled={isAirConditionerPending}
-            >
-              <AirVentIcon />
-              {isAirConditionerPending ? 'Se procesează...' : 'Oprește clima'}
-            </Button>
-          </div>
-          {airConditionerError && <p className='text-destructive text-sm'>{airConditionerError}</p>}
-        </div>
-
-        <div className='border-border border-t pt-4'>
-          <p className='text-foreground mb-3 text-base font-semibold'>Control ușă</p>
-          <p className='text-muted-foreground mb-2 text-sm'>
-            Stare inițială:{' '}
-            <span className='text-foreground font-medium'>
-              {doorStatus === 'locked' ? 'Încuiată' : doorStatus === 'unlocked' ? 'Descuiată' : 'Necunoscută'}
+          <div className='flex flex-wrap items-center justify-between gap-2'>
+            <span className='flex items-center gap-2 font-semibold'>
+              {doorStatus === 'unlocked' ? (
+                <UnlockKeyholeIcon className='text-primary size-5' aria-hidden='true' />
+              ) : (
+                <LockKeyholeIcon className='text-muted-foreground size-5' aria-hidden='true' />
+              )}
+              {doorStatus === 'locked' ? 'Încuiată' : doorStatus === 'unlocked' ? 'Descuiată' : 'Stare necunoscută'}
             </span>
-          </p>
-          <p className='text-muted-foreground mb-3 flex items-center gap-1.5 text-sm'>
-            <BatteryMediumIcon className='size-4' />
-            Baterie Nuki:{' '}
-            <span className='text-foreground font-medium'>
-              {doorBattery !== null ? `${doorBattery}%` : doorBatteryCritical ? 'Critică' : 'Necunoscută'}
+            <span className='text-muted-foreground flex items-center gap-1.5 text-sm'>
+              <BatteryMediumIcon className='size-4' aria-hidden='true' />
+              Baterie Nuki{' '}
+              <span className='text-foreground font-medium'>
+                {doorBattery !== null ? `${doorBattery}%` : doorBatteryCritical ? 'critică' : '–'}
+              </span>
             </span>
-          </p>
-          <div className='relative'>
-            {isDoorPending && (
-              <div className='bg-background/90 absolute inset-0 z-10 flex items-center justify-center rounded-md px-4 text-center backdrop-blur-sm'>
-                <span className='text-muted-foreground text-sm font-medium' role='status' aria-live='polite'>
-                  Se așteaptă răspunsul de la Nuki...
-                </span>
-              </div>
-            )}
-            <div className='grid gap-2 sm:grid-cols-2'>
-              <Button
-                variant='outline'
-                className='border-emerald-600/50 text-emerald-700 hover:bg-emerald-600/10 dark:text-emerald-400'
-                onClick={() => updateDoor('unlock')}
-                disabled={isDoorPending}
-              >
-                <UnlockKeyholeIcon />
-                Descuie ușa
-              </Button>
-              <Button variant='destructive' onClick={() => updateDoor('lock')} disabled={isDoorPending}>
-                <LockKeyholeIcon />
-                Încuie ușa
-              </Button>
-            </div>
           </div>
+          <OpenCloseButtons
+            onOpen={() => updateDoor('unlock')}
+            onClose={() => updateDoor('lock')}
+            disabled={isDoorPending}
+            openLabel='Descuie'
+            closeLabel='Încuie'
+          />
           {doorError && <p className='text-destructive text-sm'>{doorError}</p>}
         </div>
-      </CardContent>
-    </Card>
+      </section>
+    </div>
   )
 }
 

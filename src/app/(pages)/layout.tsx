@@ -5,6 +5,7 @@ import type { ReactNode } from 'react'
 // Component Imports
 import Footer from '@/components/layout/Footer'
 import Header from '@/components/layout/Header'
+import MobileTabBar from '@/components/layout/MobileTabBar'
 import Sidebar from '@/components/layout/Sidebar'
 import { SidebarInset } from '@/components/ui/sidebar'
 import { Toaster } from '@/components/ui/sonner'
@@ -25,9 +26,12 @@ const PagesLayout = async ({ children }: Readonly<{ children: ReactNode }>) => {
       </Suspense>
       <SidebarInset className='bg-background flex min-w-0 flex-1 flex-col'>
         <Header user={user} />
-        <main className='mx-auto size-full max-w-360 flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8'>{children}</main>
+        <main className='mx-auto size-full max-w-360 flex-1 px-4 pt-5 pb-28 sm:px-6 md:py-6 lg:px-8 lg:py-8'>
+          {children}
+        </main>
         <Toaster />
         <Footer />
+        <MobileTabBar />
       </SidebarInset>
     </div>
   )
