@@ -8,7 +8,10 @@ import { redirect } from 'next/navigation'
 import { findUserByEmail, registerUser, verifyPassword } from '@/lib/n8n-users'
 
 const AUTH_COOKIE_NAME = 'pingplay_session'
-const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 7
+
+// Sessions do not expire from inactivity: the cookie is renewed on every visit (see refreshSession).
+// 400 days is the longest lifetime browsers accept for a cookie.
+const SESSION_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 400
 
 const getAuthConfig = () => {
   const email = process.env.AUTH_EMAIL?.trim()
@@ -54,12 +57,31 @@ const getValidSessionUser = (value: string | undefined, secret: string) => {
     }
 
     if (!session.email || !session.name || !session.issuedAt) return false
-    if (Date.now() - session.issuedAt > SESSION_DURATION_SECONDS * 1000) return false
 
     return { email: session.email, name: session.name }
   } catch {
     return false
   }
+}
+
+const setSessionCookie = async (secret: string, user: { email: string; name: string }) => {
+  const cookieStore = await cookies()
+
+  cookieStore.set(AUTH_COOKIE_NAME, createSessionValue(secret, user), {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: SESSION_COOKIE_MAX_AGE_SECONDS,
+    path: '/'
+  })
+}
+
+export const refreshSession = async () => {
+  const { secret } = getAuthConfig()
+  const cookieStore = await cookies()
+  const user = getValidSessionUser(cookieStore.get(AUTH_COOKIE_NAME)?.value, secret)
+
+  if (user) await setSessionCookie(secret, user)
 }
 
 export const login = async (_previousState: string | null, formData: FormData) => {
@@ -84,15 +106,7 @@ export const login = async (_previousState: string | null, formData: FormData) =
 
   if (!authenticatedUser) return 'Emailul sau parola sunt incorecte.'
 
-  const cookieStore = await cookies()
-
-  cookieStore.set(AUTH_COOKIE_NAME, createSessionValue(secret, authenticatedUser), {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: SESSION_DURATION_SECONDS,
-    path: '/'
-  })
+  await setSessionCookie(secret, authenticatedUser)
 
   redirect('/dashboard/rezervari')
 }

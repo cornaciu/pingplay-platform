@@ -8,6 +8,8 @@ import crypto from 'node:crypto'
 
 import { revalidatePath } from 'next/cache'
 
+import { requireAuth } from '@/lib/auth'
+
 // Data Imports
 import { db as calendarDb } from '@/fake-db/apps/calendar'
 import { db as userProfileDb } from '@/fake-db/pages/user-profile'
@@ -77,6 +79,7 @@ const TUYA_API_URL = 'https://openapi.tuyaeu.com'
 const TUYA_CLIENT_ID = process.env.TUYA_CLIENT_ID
 const TUYA_CLIENT_SECRET = process.env.TUYA_CLIENT_SECRET
 const TUYA_DEVICE_ID = process.env.TUYA_DEVICE_ID
+const TUYA_THERMOSTAT_DEVICE_ID = process.env.TUYA_THERMOSTAT_DEVICE_ID ?? 'bf9336dae34c1ca742u3zw'
 const NUKI_API_URL = process.env.NUKI_API_URL ?? 'https://api.nuki.io'
 const NUKI_SMARTLOCK_ID = process.env.NUKI_SMARTLOCK_ID
 const NUKI_API_TOKEN = process.env.NUKI_API_TOKEN
@@ -494,6 +497,175 @@ export const controlAirConditioner = async (action: AirConditionerAction) => {
 
     throw new Error(`Comanda pentru climă a fost respinsă${details ? ` (${details})` : ''}`)
   }
+
+  return { success: true }
+}
+
+// Thermostat (Tuya). Temperatures travel as integers scaled by 10^scale (175 = 17.5 °C).
+export type ThermostatMode = string
+
+export type ThermostatStatus = {
+  temperature: number | null
+  setpoint: number | null
+  power: boolean | null
+  mode: ThermostatMode | null
+  heating: boolean
+  readAt: string | null
+  modes: ThermostatMode[]
+  minSetpoint: number
+  maxSetpoint: number
+  step: number
+}
+
+type TuyaThermostatSpec = { modes: ThermostatMode[]; min: number; max: number; step: number; scale: number }
+
+const DEFAULT_THERMOSTAT_SPEC: TuyaThermostatSpec = {
+  modes: ['manual', 'eco', 'program'],
+  min: 5,
+  max: 35,
+  step: 0.5,
+  scale: 1
+}
+
+const tuyaRequest = async <T>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<T> => {
+  if (!TUYA_CLIENT_ID || !TUYA_CLIENT_SECRET) throw new Error('Lipsesc credentialele Tuya')
+
+  const accessToken = await getTuyaAccessToken()
+  const payload = body === undefined ? '' : JSON.stringify(body)
+  const timestamp = Date.now().toString()
+  const sign = createTuyaSignature(TUYA_CLIENT_ID, accessToken, timestamp, method, path, payload)
+
+  const response = await fetch(`${TUYA_API_URL}${path}`, {
+    method,
+    headers: {
+      client_id: TUYA_CLIENT_ID,
+      access_token: accessToken,
+      sign,
+      t: timestamp,
+      sign_method: 'HMAC-SHA256',
+      ...(payload ? { 'Content-Type': 'application/json' } : {})
+    },
+    body: payload || undefined,
+    cache: 'no-store'
+  })
+
+  if (!response.ok) throw new Error(`Tuya a returnat ${response.status}`)
+
+  const data = (await response.json()) as { success?: boolean; code?: number; msg?: string; result?: T }
+
+  if (!data.success) {
+    const details = [data.code, data.msg].filter(Boolean).join(': ')
+
+    throw new Error(`Termostatul a respins cererea${details ? ` (${details})` : ''}`)
+  }
+
+  return data.result as T
+}
+
+const getThermostatSpec = async (): Promise<TuyaThermostatSpec> => {
+  try {
+    const result = await tuyaRequest<{ model?: string }>('GET', `/v2.0/cloud/thing/${TUYA_THERMOSTAT_DEVICE_ID}/model`)
+
+    const model = JSON.parse(result.model ?? '{}') as {
+      services?: Array<{ properties?: Array<{ code?: string; typeSpec?: Record<string, unknown> }> }>
+    }
+
+    const properties = model.services?.flatMap(service => service.properties ?? []) ?? []
+    const tempSpec = properties.find(property => property.code === 'temp_set')?.typeSpec
+    const modeSpec = properties.find(property => property.code === 'mode')?.typeSpec
+    const scale = Number(tempSpec?.scale ?? 1)
+    const factor = 10 ** scale
+
+    return {
+      modes: Array.isArray(modeSpec?.range) ? (modeSpec.range as string[]) : DEFAULT_THERMOSTAT_SPEC.modes,
+      min: typeof tempSpec?.min === 'number' ? tempSpec.min / factor : DEFAULT_THERMOSTAT_SPEC.min,
+      max: typeof tempSpec?.max === 'number' ? tempSpec.max / factor : DEFAULT_THERMOSTAT_SPEC.max,
+      step: typeof tempSpec?.step === 'number' ? tempSpec.step / factor : DEFAULT_THERMOSTAT_SPEC.step,
+      scale
+    }
+  } catch {
+    return DEFAULT_THERMOSTAT_SPEC
+  }
+}
+
+let thermostatSpecPromise: Promise<TuyaThermostatSpec> | null = null
+
+const loadThermostatSpec = () => {
+  thermostatSpecPromise ??= getThermostatSpec().then(spec => {
+    // Do not cache the fallback, so a transient model error is retried next time.
+    if (spec === DEFAULT_THERMOSTAT_SPEC) thermostatSpecPromise = null
+
+    return spec
+  })
+
+  return thermostatSpecPromise
+}
+
+export const getThermostatStatus = async (): Promise<ThermostatStatus> => {
+  await requireAuth()
+
+  if (!TUYA_THERMOSTAT_DEVICE_ID) throw new Error('Lipsește ID-ul termostatului Tuya')
+
+  const [spec, result] = await Promise.all([
+    loadThermostatSpec(),
+    tuyaRequest<{ properties?: Array<{ code: string; value: unknown; time?: number }> }>(
+      'GET',
+      `/v2.0/cloud/thing/${TUYA_THERMOSTAT_DEVICE_ID}/shadow/properties`
+    )
+  ])
+
+  const properties = Object.fromEntries((result.properties ?? []).map(property => [property.code, property]))
+  const factor = 10 ** spec.scale
+  const toDegrees = (value: unknown) => (typeof value === 'number' ? value / factor : null)
+  const readAt = properties.temp_current?.time
+
+  return {
+    temperature: toDegrees(properties.temp_current?.value),
+    setpoint: toDegrees(properties.temp_set?.value),
+    power: typeof properties.switch?.value === 'boolean' ? properties.switch.value : null,
+    mode: typeof properties.mode?.value === 'string' ? properties.mode.value : null,
+    heating: properties.work_state?.value === 'heating',
+    readAt: readAt ? new Date(readAt).toISOString() : null,
+    modes: spec.modes,
+    minSetpoint: spec.min,
+    maxSetpoint: spec.max,
+    step: spec.step
+  }
+}
+
+export type ThermostatChange = { setpoint: number } | { mode: ThermostatMode } | { power: boolean }
+
+export const updateThermostat = async (change: ThermostatChange) => {
+  await requireAuth()
+
+  if (!TUYA_THERMOSTAT_DEVICE_ID) throw new Error('Lipsește ID-ul termostatului Tuya')
+
+  const spec = await loadThermostatSpec()
+  let properties: Record<string, unknown>
+
+  if ('setpoint' in change) {
+    const { setpoint } = change
+
+    if (!Number.isFinite(setpoint) || setpoint < spec.min || setpoint > spec.max) {
+      throw new Error(`Temperatura trebuie să fie între ${spec.min} și ${spec.max} °C`)
+    }
+
+    const rounded = Math.round(setpoint / spec.step) * spec.step
+
+    properties = { temp_set: Math.round(rounded * 10 ** spec.scale) }
+  } else if ('mode' in change) {
+    if (!spec.modes.includes(change.mode)) throw new Error('Mod de funcționare necunoscut')
+
+    properties = { mode: change.mode }
+  } else if ('power' in change && typeof change.power === 'boolean') {
+    properties = { switch: change.power }
+  } else {
+    throw new Error('Comandă invalidă pentru termostat')
+  }
+
+  await tuyaRequest('POST', `/v2.0/cloud/thing/${TUYA_THERMOSTAT_DEVICE_ID}/shadow/properties/issue`, {
+    properties
+  })
 
   return { success: true }
 }

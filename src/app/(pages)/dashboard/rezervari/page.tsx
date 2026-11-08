@@ -11,6 +11,7 @@ import { getStripeRevenueLast30Days } from '@/lib/stripe'
 import SalesMetricsCard from '@/views/dashboards/charts/chart-sales-metrics'
 import CreateReservationCard from '@/views/dashboards/rezervari/create-reservation-card'
 import TableAvailabilityPanel from '@/views/dashboards/rezervari/table-availability-panel'
+import ThermostatPanel from '@/views/dashboards/rezervari/thermostat-panel'
 import StatisticsCard from '@/views/dashboards/statistics/statistics-card-01'
 
 const DASHBOARD_EVENT_TYPES = [
@@ -88,6 +89,7 @@ const OrdersDashboard = async () => {
       </div>
       <div className='grid grid-cols-1 items-start gap-6 xl:grid-cols-3'>
         <TableAvailabilityPanel />
+        <ThermostatPanel />
         {/* Statistics Cards */}
         <div className='order-2 col-span-full grid min-w-0 gap-6 lg:grid-cols-2'>
           {DASHBOARD_EVENT_TYPES.map(eventType => {
