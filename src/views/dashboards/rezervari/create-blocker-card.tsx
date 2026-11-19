@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 
 import { useRouter } from 'next/navigation'
 
-import { BanIcon, Loader2Icon } from 'lucide-react'
+import { BanIcon, CheckCircle2Icon, Loader2Icon, TriangleAlertIcon } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { createBlocker } from '@/app/server/actions'
+import { checkBlockerConflicts, createBlocker, type BlockerConflict } from '@/app/server/actions'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -47,6 +47,9 @@ const addMinutes = (time: string, minutes: number) => {
   return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
 }
 
+const formatTime = (value: string) =>
+  new Intl.DateTimeFormat('ro-RO', { timeStyle: 'short', timeZone: 'Europe/Bucharest' }).format(new Date(value))
+
 const getToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Bucharest' })
 
 const CreateBlockerCard = () => {
@@ -58,6 +61,53 @@ const CreateBlockerCard = () => {
   const [reason, setReason] = useState('')
   const [isPending, startTransition] = useTransition()
 
+  // Live overlap check against existing bookings. The answer is stored with the query it belongs
+  // to, so while the inputs change the form treats an older answer as "still checking".
+  const [checkKey, setCheckKey] = useState(0)
+  const queryKey = `${table}|${date}|${time}|${duration}|${checkKey}`
+
+  const [check, setCheck] = useState<{ key: string; conflicts: BlockerConflict[] | null; error: string | null }>({
+    key: '',
+    conflicts: null,
+    error: null
+  })
+
+  useEffect(() => {
+    let active = true
+
+    const timer = window.setTimeout(() => {
+      checkBlockerConflicts({ table, date, time, durationMinutes: duration })
+        .then(result => {
+          if (active) {
+            setCheck(
+              result.ok
+                ? { key: queryKey, conflicts: result.conflicts, error: null }
+                : { key: queryKey, conflicts: null, error: result.error }
+            )
+          }
+        })
+        .catch(error => {
+          if (active) {
+            setCheck({
+              key: queryKey,
+              conflicts: null,
+              error: error instanceof Error ? error.message : 'Rezervările nu au putut fi verificate'
+            })
+          }
+        })
+    }, 400)
+
+    return () => {
+      active = false
+      window.clearTimeout(timer)
+    }
+  }, [table, date, time, duration, queryKey])
+
+  const isChecking = check.key !== queryKey
+  const conflicts = isChecking ? null : check.conflicts
+  const checkError = isChecking ? null : check.error
+  const hasConflicts = (conflicts?.length ?? 0) > 0
+
   const parts = splitBlockDuration(duration)
   const endTime = addMinutes(time, duration)
   const [startHour, startMinute] = time.split(':').map(Number)
@@ -68,11 +118,21 @@ const CreateBlockerCard = () => {
 
     startTransition(async () => {
       try {
-        await createBlocker({ table, date, time, durationMinutes: duration, reason })
+        const result = await createBlocker({ table, date, time, durationMinutes: duration, reason })
+
+        if (!result.ok) {
+          setCheckKey(key => key + 1)
+          toast.error(result.error)
+
+          return
+        }
+
         toast.success(`${TABLES.find(item => item.value === table)?.label} este blocată ${time}–${endTime}.`)
         setReason('')
+        setCheckKey(key => key + 1)
         router.refresh()
       } catch (error) {
+        setCheckKey(key => key + 1)
         toast.error(error instanceof Error ? error.message : 'Blocarea nu a putut fi creată')
       }
     })
@@ -189,9 +249,49 @@ const CreateBlockerCard = () => {
             {endsAfterClosing && (
               <p className='text-destructive mt-1'>Intervalul depășește ora 22:00, Calendly îl poate refuza.</p>
             )}
+            <div className='mt-3 border-t pt-3' role='status' aria-live='polite'>
+              {isChecking && (
+                <p className='text-muted-foreground flex items-center gap-2'>
+                  <Loader2Icon className='size-4 animate-spin' aria-hidden='true' />
+                  Verific rezervările existente…
+                </p>
+              )}
+              {checkError && (
+                <p className='text-destructive flex items-start gap-2'>
+                  <TriangleAlertIcon className='mt-0.5 size-4 shrink-0' aria-hidden='true' />
+                  {checkError}
+                </p>
+              )}
+              {conflicts && !hasConflicts && (
+                <p className='flex items-center gap-2 text-emerald-400'>
+                  <CheckCircle2Icon className='size-4' aria-hidden='true' />
+                  Intervalul e liber.
+                </p>
+              )}
+              {hasConflicts && (
+                <div className='text-destructive'>
+                  <p className='flex items-center gap-2 font-medium'>
+                    <TriangleAlertIcon className='size-4' aria-hidden='true' />
+                    Se suprapune cu{' '}
+                    {conflicts!.length === 1 ? 'o rezervare existentă' : `${conflicts!.length} rezervări existente`}:
+                  </p>
+                  <ul className='mt-1 list-disc pl-10'>
+                    {conflicts!.map(conflict => (
+                      <li key={`${conflict.startTime}-${conflict.name}`}>
+                        {formatTime(conflict.startTime)}–{formatTime(conflict.endTime)} · {conflict.name ?? 'Rezervare'}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
 
-          <Button className='h-11 w-full' type='submit' disabled={isPending}>
+          <Button
+            className='h-11 w-full'
+            type='submit'
+            disabled={isPending || isChecking || hasConflicts || checkError !== null}
+          >
             {isPending && <Loader2Icon className='animate-spin' />}
             {isPending ? 'Se blochează… (durează până la un minut)' : 'Blochează intervalul'}
           </Button>

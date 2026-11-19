@@ -45,3 +45,17 @@ export const splitBlockDuration = (totalMinutes: number): BlockDuration[] => {
 
   return parts
 }
+
+const TABLE_BY_EVENT_TYPE = new Map(
+  Object.entries(CALENDLY_EVENT_TYPES).flatMap(([table, byDuration]) =>
+    Object.values(byDuration).map(uri => [uri, table as BlockerTable] as const)
+  )
+)
+
+// Masa 1 and Masa 2 are independent; "ambele" takes both. A booking of an event type we do not
+// know (another Calendly event type) is treated as taking the whole room, to be safe.
+export const tablesOverlap = (table: BlockerTable, eventTypeUri: string) => {
+  const other = TABLE_BY_EVENT_TYPE.get(eventTypeUri)
+
+  return !other || table === 'ambele' || other === 'ambele' || other === table
+}

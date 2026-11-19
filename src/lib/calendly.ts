@@ -429,3 +429,20 @@ export const getCalendlyCalendarEvents = async () => {
       return { id: event.uri, title, start: new Date(event.start_time), end: new Date(event.end_time), color }
     })
 }
+
+// Active bookings that overlap [start, end). Bookings last at most a few hours, so a one-day
+// look-back on the start time is enough to catch one that began before the interval.
+export const getActiveCalendlyEventsOverlapping = async (start: Date, end: Date) => {
+  const organization = await getCalendlyOrganization()
+  const lookBack = new Date(start.getTime() - CURRENT_EVENTS_LOOKBACK_IN_MILLISECONDS)
+  const events = await getScheduledEvents(organization, lookBack.toISOString(), end.toISOString(), 'active')
+
+  return events
+    .filter(event => new Date(event.start_time) < end && new Date(event.end_time) > start)
+    .map(event => ({
+      name: event.name ?? null,
+      eventTypeUri: event.event_type,
+      startTime: event.start_time,
+      endTime: event.end_time
+    }))
+}

@@ -13,8 +13,10 @@ import {
   CALENDLY_EVENT_TYPES,
   MAX_BLOCK_MINUTES,
   splitBlockDuration,
+  tablesOverlap,
   type BlockerTable
 } from '@/lib/calendly-event-types'
+import { getActiveCalendlyEventsOverlapping } from '@/lib/calendly'
 
 // Data Imports
 import { db as calendarDb } from '@/fake-db/apps/calendar'
@@ -748,10 +750,9 @@ const cancelCalendlyEvent = async (eventUuid: string, reason: string) => {
   }).catch(() => undefined)
 }
 
-export const createBlocker = async ({ table, date, time, durationMinutes, reason }: BlockerDetails) => {
-  await requireAuth()
+export type BlockerConflict = { name: string | null; startTime: string; endTime: string }
 
-  if (!N8N_BLOCKER_SECRET) throw new Error('Lipsește N8N_BLOCKER_SECRET din configurarea serverului')
+const parseBlocker = ({ table, date, time, durationMinutes }: Omit<BlockerDetails, 'reason'>) => {
   if (!(table in CALENDLY_EVENT_TYPES)) throw new Error('Masă necunoscută')
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:(00|30)$/.test(time)) {
@@ -767,6 +768,77 @@ export const createBlocker = async ({ table, date, time, durationMinutes, reason
   const start = bucharestTimeToUtc(date, time)
 
   if (start.getTime() <= Date.now()) throw new Error('Ora de început trebuie să fie în viitor')
+
+  return { start, end: new Date(start.getTime() + durationMinutes * 60_000) }
+}
+
+// Our own overlap check, independent of how Calendly availability is configured: Masa 1 clashes
+// with Masa 1 and Ambele, Masa 2 with Masa 2 and Ambele, Ambele with every booking.
+const findBlockerConflicts = async (table: BlockerTable, start: Date, end: Date): Promise<BlockerConflict[]> => {
+  if (!CALENDLY_ACCESS_TOKEN) throw new Error('Lipsește tokenul API Calendly')
+
+  const events = await getActiveCalendlyEventsOverlapping(start, end).catch(() => {
+    throw new Error('Rezervările existente nu au putut fi verificate în Calendly. Încearcă din nou.')
+  })
+
+  return events
+    .filter(event => tablesOverlap(table, event.eventTypeUri))
+    .map(({ name, startTime, endTime }) => ({ name, startTime, endTime }))
+    .sort((first, second) => first.startTime.localeCompare(second.startTime))
+}
+
+// Next.js hides thrown error messages from the browser in production, so the blocker actions
+// return their errors as data for the form to show.
+type ActionResult<T> = ({ ok: true } & T) | { ok: false; error: string }
+
+const toActionError = (error: unknown): { ok: false; error: string } => ({
+  ok: false,
+  error: error instanceof Error ? error.message : 'A apărut o eroare neașteptată'
+})
+
+export const checkBlockerConflicts = async (
+  details: Omit<BlockerDetails, 'reason'>
+): Promise<ActionResult<{ conflicts: BlockerConflict[] }>> => {
+  await requireAuth()
+
+  try {
+    const { start, end } = parseBlocker(details)
+
+    return { ok: true, conflicts: await findBlockerConflicts(details.table, start, end) }
+  } catch (error) {
+    return toActionError(error)
+  }
+}
+
+const formatBucharestTime = (value: string) =>
+  new Intl.DateTimeFormat('ro-RO', { timeStyle: 'short', timeZone: RESERVATION_TIMEZONE }).format(new Date(value))
+
+export const createBlocker = async (details: BlockerDetails): Promise<ActionResult<{ end: string }>> => {
+  await requireAuth()
+
+  try {
+    return { ok: true, ...(await bookBlocker(details)) }
+  } catch (error) {
+    return toActionError(error)
+  }
+}
+
+const bookBlocker = async ({ table, date, time, durationMinutes, reason }: BlockerDetails) => {
+  if (!N8N_BLOCKER_SECRET) throw new Error('Lipsește N8N_BLOCKER_SECRET din configurarea serverului')
+
+  const { start, end } = parseBlocker({ table, date, time, durationMinutes })
+  const conflicts = await findBlockerConflicts(table, start, end)
+
+  if (conflicts.length > 0) {
+    const list = conflicts
+      .map(
+        conflict =>
+          `${conflict.name ?? 'rezervare'} ${formatBucharestTime(conflict.startTime)}–${formatBucharestTime(conflict.endTime)}`
+      )
+      .join(', ')
+
+    throw new Error(`Intervalul se suprapune cu rezervări existente: ${list}`)
+  }
 
   const label = reason.trim().slice(0, 60)
   const name = label ? `BLOCAT - ${label}` : 'BLOCAT - PINGPLAY'
@@ -810,5 +882,5 @@ export const createBlocker = async ({ table, date, time, durationMinutes, reason
 
   revalidatePath('/dashboard/rezervari')
 
-  return { eventUuids: bookedUuids, end: slotStart.toISOString() }
+  return { end: slotStart.toISOString() }
 }
