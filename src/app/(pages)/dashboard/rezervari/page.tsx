@@ -8,6 +8,7 @@ import { getCalendlyBookingsLast30Days, getCalendlyCurrentBookings, getCalendlyF
 import { getStripeRevenueLast30Days } from '@/lib/stripe'
 
 import SalesMetricsCard from '@/views/dashboards/charts/chart-sales-metrics'
+import CreateBlockerCard from '@/views/dashboards/rezervari/create-blocker-card'
 import CreateReservationCard from '@/views/dashboards/rezervari/create-reservation-card'
 import RoomOverview from '@/views/dashboards/rezervari/room-overview'
 import StatisticsCard from '@/views/dashboards/statistics/statistics-card-01'
@@ -213,6 +214,10 @@ const OrdersDashboard = async () => {
 
         <div id='creare-rezervare' className='order-3 min-w-0 scroll-mt-24 xl:col-span-full'>
           <CreateReservationCard />
+        </div>
+
+        <div id='blocare' className='order-3 min-w-0 scroll-mt-24 xl:col-span-full'>
+          <CreateBlockerCard />
         </div>
 
         <SalesMetricsCard revenueStats={stripeRevenueStats} className='order-4 col-span-full w-full' />

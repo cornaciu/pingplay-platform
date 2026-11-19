@@ -9,6 +9,12 @@ import crypto from 'node:crypto'
 import { revalidatePath } from 'next/cache'
 
 import { requireAuth } from '@/lib/auth'
+import {
+  CALENDLY_EVENT_TYPES,
+  MAX_BLOCK_MINUTES,
+  splitBlockDuration,
+  type BlockerTable
+} from '@/lib/calendly-event-types'
 
 // Data Imports
 import { db as calendarDb } from '@/fake-db/apps/calendar'
@@ -88,6 +94,13 @@ const NUKI_CONFIRMATION_DELAY_MS = 1500
 const N8N_AVAILABLE_URL = process.env.N8N_AVAILABLE_URL ?? 'https://n8n-wf.pingplay.ro/webhook/calendly/available'
 const CALENDLY_API_URL = 'https://api.calendly.com'
 const CALENDLY_ACCESS_TOKEN = process.env.CALENDLY_ACCESS_TOKEN
+
+const N8N_BLOCKER_WEBHOOK_URL =
+  process.env.N8N_BLOCKER_WEBHOOK_URL ?? 'https://n8n-wf.pingplay.ro/webhook/pingplay-blocker'
+
+const N8N_BLOCKER_SECRET = process.env.N8N_BLOCKER_SECRET
+const BLOCKER_EMAIL = process.env.BLOCKER_EMAIL ?? 'info@pingplay.ro'
+const BLOCKER_PHONE = process.env.BLOCKER_PHONE ?? '0750252587'
 
 const RESERVATION_TIMEZONE = 'Europe/Bucharest'
 
@@ -172,16 +185,25 @@ export const getReservationAvailability = async (eventTypeUri: string, date: str
   return selectedDay ?? { date, slots: [] }
 }
 
-export const createReservation = async ({
+export const createReservation = async (details: ReservationDetails) => {
+  if (!details.consentAccepted) throw new Error('Trebuie să accepți regulamentul și politica de confidențialitate')
+
+  const { inviteeUri } = await bookCalendlyInvitee({ ...details, consentAccepted: true })
+
+  return { paymentUrl: null, calendlyUri: inviteeUri }
+}
+
+// Books one Calendly slot through the API, answering the event type's required questions
+// (phone, consent, email) the same way the public booking page does.
+const bookCalendlyInvitee = async ({
   eventTypeUri,
   startTime,
   name,
   email,
   phone,
   consentAccepted
-}: ReservationDetails) => {
+}: Omit<ReservationDetails, 'eventTypeName'>) => {
   if (!CALENDLY_ACCESS_TOKEN) throw new Error('Lipsește tokenul API Calendly')
-  if (!consentAccepted) throw new Error('Trebuie să accepți regulamentul și politica de confidențialitate')
 
   const eventTypeResponse = await fetch(eventTypeUri, {
     headers: { Authorization: `Bearer ${CALENDLY_ACCESS_TOKEN}` },
@@ -265,11 +287,11 @@ export const createReservation = async ({
   })
 
   const responseText = await response.text()
-  let data: { message?: string; details?: string; resource?: { uri?: string } } = {}
+  let data: { message?: string; details?: string; resource?: { uri?: string; event?: string } } = {}
 
   if (responseText.trim()) {
     try {
-      data = JSON.parse(responseText) as { message?: string; details?: string; resource?: { uri?: string } }
+      data = JSON.parse(responseText) as typeof data
     } catch {
       console.error('[Calendly] Reservation returned a non-JSON response', {
         status: response.status,
@@ -332,7 +354,7 @@ export const createReservation = async ({
     throw new Error('API-ul Calendly nu a confirmat crearea rezervării')
   }
 
-  return { paymentUrl: null, calendlyUri: data.resource.uri }
+  return { inviteeUri: data.resource.uri, eventUri: data.resource.event ?? null }
 }
 
 export const cancelCalendlyReservation = async (formData: FormData) => {
@@ -668,4 +690,125 @@ export const updateThermostat = async (change: ThermostatChange) => {
   })
 
   return { success: true }
+}
+
+// Blocker: books a table in Calendly like a client would, then has n8n mark the booking as paid
+// ("Status plata" = succeeded in the Rezervari sheet), so the unpaid-booking workflow leaves it
+// alone and ECO_Mode treats it as an active reservation.
+export type BlockerDetails = {
+  table: BlockerTable
+  date: string
+  time: string
+  durationMinutes: number
+  reason: string
+}
+
+const bucharestOffsetMs = (utcMs: number) => {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', {
+      timeZone: RESERVATION_TIMEZONE,
+      hourCycle: 'h23',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    })
+      .formatToParts(new Date(utcMs))
+      .map(part => [part.type, Number(part.value)])
+  )
+
+  return Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second) - utcMs
+}
+
+const bucharestTimeToUtc = (date: string, time: string) => {
+  const [year, month, day] = date.split('-').map(Number)
+  const [hour, minute] = time.split(':').map(Number)
+  const wallClock = Date.UTC(year, month - 1, day, hour, minute)
+  const firstGuess = wallClock - bucharestOffsetMs(wallClock)
+
+  return new Date(wallClock - bucharestOffsetMs(firstGuess))
+}
+
+const scheduledEventUuid = (eventUri: string) => {
+  const match = eventUri.match(/\/scheduled_events\/([^/]+)/)
+
+  if (!match) throw new Error('Calendly nu a returnat ID-ul evenimentului')
+
+  return match[1]
+}
+
+const cancelCalendlyEvent = async (eventUuid: string, reason: string) => {
+  await fetch(`${CALENDLY_API_URL}/scheduled_events/${eventUuid}/cancellation`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${CALENDLY_ACCESS_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reason }),
+    cache: 'no-store'
+  }).catch(() => undefined)
+}
+
+export const createBlocker = async ({ table, date, time, durationMinutes, reason }: BlockerDetails) => {
+  await requireAuth()
+
+  if (!N8N_BLOCKER_SECRET) throw new Error('Lipsește N8N_BLOCKER_SECRET din configurarea serverului')
+  if (!(table in CALENDLY_EVENT_TYPES)) throw new Error('Masă necunoscută')
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:(00|30)$/.test(time)) {
+    throw new Error('Alege o dată și o oră de început la fix sau la jumătate')
+  }
+
+  if (!Number.isInteger(durationMinutes) || durationMinutes % 30 !== 0 || durationMinutes < 30) {
+    throw new Error('Durata trebuie să fie un multiplu de 30 de minute')
+  }
+
+  if (durationMinutes > MAX_BLOCK_MINUTES) throw new Error(`Durata maximă este ${MAX_BLOCK_MINUTES / 60} ore`)
+
+  const start = bucharestTimeToUtc(date, time)
+
+  if (start.getTime() <= Date.now()) throw new Error('Ora de început trebuie să fie în viitor')
+
+  const label = reason.trim().slice(0, 60)
+  const name = label ? `BLOCAT - ${label}` : 'BLOCAT - PINGPLAY'
+  const bookedUuids: string[] = []
+  let slotStart = start
+
+  try {
+    for (const minutes of splitBlockDuration(durationMinutes)) {
+      const { inviteeUri, eventUri } = await bookCalendlyInvitee({
+        eventTypeUri: CALENDLY_EVENT_TYPES[table][minutes],
+        startTime: slotStart.toISOString(),
+        name,
+        email: BLOCKER_EMAIL,
+        phone: BLOCKER_PHONE,
+        consentAccepted: true
+      })
+
+      bookedUuids.push(scheduledEventUuid(eventUri ?? inviteeUri))
+      slotStart = new Date(slotStart.getTime() + minutes * 60_000)
+    }
+
+    const response = await fetch(N8N_BLOCKER_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-pingplay-secret': N8N_BLOCKER_SECRET },
+      body: JSON.stringify({ eventUuids: bookedUuids, reason: label }),
+      cache: 'no-store',
+      signal: AbortSignal.timeout(90_000)
+    })
+
+    const result = (await response.json().catch(() => ({}))) as { ok?: boolean; error?: string }
+
+    if (!response.ok || !result.ok) {
+      throw new Error(result.error || `n8n nu a confirmat marcarea ca plătită (${response.status})`)
+    }
+  } catch (error) {
+    // Keep Calendly and the sheet consistent: a half-made block would be cancelled for non-payment anyway.
+    await Promise.all(bookedUuids.map(uuid => cancelCalendlyEvent(uuid, 'Blocare anulată automat')))
+
+    throw error instanceof Error ? error : new Error('Blocarea nu a putut fi creată')
+  }
+
+  revalidatePath('/dashboard/rezervari')
+
+  return { eventUuids: bookedUuids, end: slotStart.toISOString() }
 }

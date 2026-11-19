@@ -1,0 +1,204 @@
+'use client'
+
+import { useState, useTransition } from 'react'
+
+import { useRouter } from 'next/navigation'
+
+import { BanIcon, Loader2Icon } from 'lucide-react'
+import { toast } from 'sonner'
+
+import { createBlocker } from '@/app/server/actions'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { MAX_BLOCK_MINUTES, splitBlockDuration, type BlockerTable } from '@/lib/calendly-event-types'
+import { cn } from '@/lib/utils'
+
+const TABLES: { value: BlockerTable; label: string; dots: string[] }[] = [
+  { value: 'masa1', label: 'Masa 1', dots: ['bg-emerald-400'] },
+  { value: 'masa2', label: 'Masa 2', dots: ['bg-blue-400'] },
+  { value: 'ambele', label: 'Ambele', dots: ['bg-emerald-400', 'bg-blue-400'] }
+]
+
+// Opening hours 08:00–22:00, half-hour steps.
+const START_TIMES = Array.from({ length: 28 }, (_, index) => {
+  const minutes = 8 * 60 + index * 30
+
+  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${minutes % 60 === 0 ? '00' : '30'}`
+})
+
+const DURATIONS = Array.from({ length: MAX_BLOCK_MINUTES / 30 }, (_, index) => (index + 1) * 30)
+
+const formatDuration = (minutes: number) => {
+  const hours = Math.floor(minutes / 60)
+  const rest = minutes % 60
+
+  if (hours === 0) return `${rest} min`
+
+  return rest ? `${hours} h ${rest} min` : hours === 1 ? '1 oră' : `${hours} ore`
+}
+
+const addMinutes = (time: string, minutes: number) => {
+  const [hour, minute] = time.split(':').map(Number)
+  const total = hour * 60 + minute + minutes
+
+  return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+}
+
+const getToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Bucharest' })
+
+const CreateBlockerCard = () => {
+  const router = useRouter()
+  const [table, setTable] = useState<BlockerTable>('masa1')
+  const [date, setDate] = useState(getToday)
+  const [time, setTime] = useState('18:00')
+  const [duration, setDuration] = useState(120)
+  const [reason, setReason] = useState('')
+  const [isPending, startTransition] = useTransition()
+
+  const parts = splitBlockDuration(duration)
+  const endTime = addMinutes(time, duration)
+  const [startHour, startMinute] = time.split(':').map(Number)
+  const endsAfterClosing = startHour * 60 + startMinute + duration > 22 * 60
+
+  const submit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    startTransition(async () => {
+      try {
+        await createBlocker({ table, date, time, durationMinutes: duration, reason })
+        toast.success(`${TABLES.find(item => item.value === table)?.label} este blocată ${time}–${endTime}.`)
+        setReason('')
+        router.refresh()
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Blocarea nu a putut fi creată')
+      }
+    })
+  }
+
+  return (
+    <Card className='col-span-full w-full'>
+      <CardHeader>
+        <CardTitle className='flex items-center gap-2'>
+          <BanIcon className='text-primary size-5' aria-hidden='true' />
+          Blochează masa
+        </CardTitle>
+        <p className='text-muted-foreground text-sm'>
+          Intervalul apare ca rezervare plătită și confirmată: nu mai poate fi rezervat, iar automatizările îl tratează
+          ca rezervare activă.
+        </p>
+      </CardHeader>
+      <CardContent>
+        <form className='space-y-5' onSubmit={submit}>
+          <fieldset className='grid gap-2'>
+            <legend className='mb-2 text-sm font-medium'>Masă</legend>
+            <div className='bg-muted grid grid-cols-3 gap-1.5 rounded-xl p-1'>
+              {TABLES.map(item => (
+                <Button
+                  key={item.value}
+                  type='button'
+                  variant={table === item.value ? 'default' : 'ghost'}
+                  aria-pressed={table === item.value}
+                  className='h-11 rounded-lg'
+                  onClick={() => setTable(item.value)}
+                  disabled={isPending}
+                >
+                  <span className='flex gap-0.5' aria-hidden='true'>
+                    {item.dots.map(dot => (
+                      <span key={dot} className={cn('size-2 rounded-full', dot)} />
+                    ))}
+                  </span>
+                  {item.label}
+                </Button>
+              ))}
+            </div>
+          </fieldset>
+
+          <div className='grid gap-4 sm:grid-cols-3'>
+            <div className='grid gap-2'>
+              <Label htmlFor='blocker-date'>Data</Label>
+              <Input
+                id='blocker-date'
+                type='date'
+                required
+                min={getToday()}
+                value={date}
+                onChange={event => setDate(event.target.value)}
+                disabled={isPending}
+              />
+            </div>
+            <div className='grid gap-2'>
+              <Label htmlFor='blocker-time'>De la</Label>
+              <Select value={time} onValueChange={value => value && setTime(value)} disabled={isPending}>
+                <SelectTrigger id='blocker-time' className='w-full'>
+                  <SelectValue>{time}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {START_TIMES.map(option => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className='grid gap-2'>
+              <Label htmlFor='blocker-duration'>Durată</Label>
+              <Select
+                value={String(duration)}
+                onValueChange={value => value && setDuration(Number(value))}
+                disabled={isPending}
+              >
+                <SelectTrigger id='blocker-duration' className='w-full'>
+                  <SelectValue>{formatDuration(duration)}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {DURATIONS.map(option => (
+                    <SelectItem key={option} value={String(option)}>
+                      {formatDuration(option)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className='grid gap-2'>
+            <Label htmlFor='blocker-reason'>Motiv (opțional)</Label>
+            <Input
+              id='blocker-reason'
+              maxLength={60}
+              placeholder='ex. Antrenament, Mentenanță, Eveniment privat'
+              value={reason}
+              onChange={event => setReason(event.target.value)}
+              disabled={isPending}
+            />
+          </div>
+
+          <div className='bg-muted/40 rounded-xl border p-3 text-sm'>
+            <p className='font-medium'>
+              {time}–{endTime} · {formatDuration(duration)}
+            </p>
+            <p className='text-muted-foreground mt-1'>
+              {parts.length === 1
+                ? 'O rezervare în Calendly, marcată ca plătită.'
+                : `${parts.length} rezervări consecutive în Calendly (${parts.map(formatDuration).join(' + ')}), toate marcate ca plătite.`}
+            </p>
+            {endsAfterClosing && (
+              <p className='text-destructive mt-1'>Intervalul depășește ora 22:00, Calendly îl poate refuza.</p>
+            )}
+          </div>
+
+          <Button className='h-11 w-full' type='submit' disabled={isPending}>
+            {isPending && <Loader2Icon className='animate-spin' />}
+            {isPending ? 'Se blochează… (durează până la un minut)' : 'Blochează intervalul'}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  )
+}
+
+export default CreateBlockerCard
