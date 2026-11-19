@@ -90,6 +90,9 @@ const OrdersDashboard = async () => {
       </div>
       <div className='grid grid-cols-1 items-start gap-6 xl:grid-cols-3'>
         <TableAvailabilityPanel />
+        <div id='blocare' className='order-1 col-span-full min-w-0 scroll-mt-24'>
+          <CreateBlockerCard />
+        </div>
         <ThermostatPanel />
         {/* Statistics Cards */}
         <div className='order-2 col-span-full grid min-w-0 gap-6 lg:grid-cols-2'>
@@ -267,10 +270,6 @@ const OrdersDashboard = async () => {
 
         <div id='creare-rezervare' className='order-3 min-w-0 scroll-mt-24 xl:col-span-full'>
           <CreateReservationCard />
-        </div>
-
-        <div id='blocare' className='order-3 min-w-0 scroll-mt-24 xl:col-span-full'>
-          <CreateBlockerCard />
         </div>
 
         <SalesMetricsCard revenueStats={stripeRevenueStats} className='order-4 col-span-full w-full' />

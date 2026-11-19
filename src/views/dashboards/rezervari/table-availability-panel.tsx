@@ -162,7 +162,7 @@ const TableAvailabilityPanel = () => {
         <p className='text-foreground text-lg font-semibold tracking-tight'>Control locație</p>
         <p className='text-muted-foreground text-xs'>Comenzi rapide pentru mese și echipamente</p>
       </CardHeader>
-      <CardContent className='grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4 [&_button]:h-auto [&_button]:min-h-11 [&_button]:py-2 [&_button]:whitespace-normal'>
+      <CardContent className='grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4 [&_button]:h-11 [&_button]:w-full [&_button]:whitespace-nowrap'>
         <div className='col-span-full grid gap-3 sm:grid-cols-2'>
           {(
             [
@@ -217,7 +217,7 @@ const TableAvailabilityPanel = () => {
           })}
         </div>
 
-        <div className='border-border relative grid gap-2 border-t pt-4 sm:grid-cols-2'>
+        <div className='border-border relative flex flex-col gap-3 border-t pt-4'>
           {cooldownTarget === 'Ambele' && hasCooldown && (
             <div className='bg-background/90 absolute inset-0 z-10 flex items-center justify-center rounded-md backdrop-blur-sm'>
               <span className='text-muted-foreground text-center text-sm font-medium'>
@@ -225,28 +225,31 @@ const TableAvailabilityPanel = () => {
               </span>
             </div>
           )}
-          <Button
-            variant='outline'
-            className='border-emerald-600/50 text-emerald-700 hover:bg-emerald-600/10 dark:text-emerald-400'
-            onClick={() => updateTable('Ambele', true)}
-            disabled={isPending || hasCooldown}
-          >
-            <CheckCircle2Icon />
-            Deschide ambele
-          </Button>
-          <Button
-            variant='destructive'
-            onClick={() => updateTable('Ambele', false)}
-            disabled={isPending || hasCooldown}
-          >
-            <LockKeyholeIcon />
-            Închide ambele
-          </Button>
+          <p className='text-foreground text-base font-semibold'>Control ambele mese</p>
+          <div className='grid grid-cols-2 gap-2'>
+            <Button
+              variant='outline'
+              className='border-emerald-600/50 text-emerald-700 hover:bg-emerald-600/10 dark:text-emerald-400'
+              onClick={() => updateTable('Ambele', true)}
+              disabled={isPending || hasCooldown}
+            >
+              <CheckCircle2Icon />
+              Deschide
+            </Button>
+            <Button
+              variant='destructive'
+              onClick={() => updateTable('Ambele', false)}
+              disabled={isPending || hasCooldown}
+            >
+              <LockKeyholeIcon />
+              Închide
+            </Button>
+          </div>
         </div>
 
-        <div className='border-border border-t pt-4'>
-          <p className='text-foreground mb-3 text-base font-semibold'>Control lumină și TV</p>
-          <div className='grid gap-2 sm:grid-cols-2'>
+        <div className='border-border flex flex-col gap-3 border-t pt-4'>
+          <p className='text-foreground text-base font-semibold'>Control lumină și TV</p>
+          <div className='grid grid-cols-2 gap-2'>
             <Button
               variant='outline'
               className='border-emerald-600/50 text-emerald-700 hover:bg-emerald-600/10 dark:text-emerald-400'
@@ -263,9 +266,9 @@ const TableAvailabilityPanel = () => {
           </div>
         </div>
 
-        <div className='border-border border-t pt-4'>
-          <p className='text-foreground mb-3 text-base font-semibold'>Control climă</p>
-          <div className='grid gap-2 sm:grid-cols-2'>
+        <div className='border-border flex flex-col gap-3 border-t pt-4'>
+          <p className='text-foreground text-base font-semibold'>Control climă</p>
+          <div className='grid grid-cols-2 gap-2'>
             <Button
               variant='outline'
               className='border-emerald-600/50 text-emerald-700 hover:bg-emerald-600/10 dark:text-emerald-400'
@@ -273,7 +276,7 @@ const TableAvailabilityPanel = () => {
               disabled={isAirConditionerPending}
             >
               <AirVentIcon />
-              {isAirConditionerPending ? 'Se procesează...' : 'Pornește clima'}
+              {isAirConditionerPending ? 'Se trimite...' : 'Pornește'}
             </Button>
             <Button
               variant='destructive'
@@ -281,27 +284,14 @@ const TableAvailabilityPanel = () => {
               disabled={isAirConditionerPending}
             >
               <AirVentIcon />
-              {isAirConditionerPending ? 'Se procesează...' : 'Oprește clima'}
+              {isAirConditionerPending ? 'Se trimite...' : 'Oprește'}
             </Button>
           </div>
           {airConditionerError && <p className='text-destructive text-sm'>{airConditionerError}</p>}
         </div>
 
-        <div className='border-border border-t pt-4'>
-          <p className='text-foreground mb-3 text-base font-semibold'>Control ușă</p>
-          <p className='text-muted-foreground mb-2 text-sm'>
-            Stare inițială:{' '}
-            <span className='text-foreground font-medium'>
-              {doorStatus === 'locked' ? 'Încuiată' : doorStatus === 'unlocked' ? 'Descuiată' : 'Necunoscută'}
-            </span>
-          </p>
-          <p className='text-muted-foreground mb-3 flex items-center gap-1.5 text-sm'>
-            <BatteryMediumIcon className='size-4' />
-            Baterie Nuki:{' '}
-            <span className='text-foreground font-medium'>
-              {doorBattery !== null ? `${doorBattery}%` : doorBatteryCritical ? 'Critică' : 'Necunoscută'}
-            </span>
-          </p>
+        <div className='border-border flex flex-col gap-3 border-t pt-4'>
+          <p className='text-foreground text-base font-semibold'>Control ușă</p>
           <div className='relative'>
             {isDoorPending && (
               <div className='bg-background/90 absolute inset-0 z-10 flex items-center justify-center rounded-md px-4 text-center backdrop-blur-sm'>
@@ -310,7 +300,7 @@ const TableAvailabilityPanel = () => {
                 </span>
               </div>
             )}
-            <div className='grid gap-2 sm:grid-cols-2'>
+            <div className='grid grid-cols-2 gap-2'>
               <Button
                 variant='outline'
                 className='border-emerald-600/50 text-emerald-700 hover:bg-emerald-600/10 dark:text-emerald-400'
@@ -318,14 +308,29 @@ const TableAvailabilityPanel = () => {
                 disabled={isDoorPending}
               >
                 <UnlockKeyholeIcon />
-                Descuie ușa
+                Descuie
               </Button>
               <Button variant='destructive' onClick={() => updateDoor('lock')} disabled={isDoorPending}>
                 <LockKeyholeIcon />
-                Încuie ușa
+                Încuie
               </Button>
             </div>
           </div>
+          <p className='text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-sm'>
+            <span>
+              Stare:{' '}
+              <span className='text-foreground font-medium'>
+                {doorStatus === 'locked' ? 'Încuiată' : doorStatus === 'unlocked' ? 'Descuiată' : 'Necunoscută'}
+              </span>
+            </span>
+            <span className='flex items-center gap-1.5'>
+              <BatteryMediumIcon className='size-4' />
+              Nuki{' '}
+              <span className='text-foreground font-medium'>
+                {doorBattery !== null ? `${doorBattery}%` : doorBatteryCritical ? 'critică' : '–'}
+              </span>
+            </span>
+          </p>
           {doorError && <p className='text-destructive text-sm'>{doorError}</p>}
         </div>
       </CardContent>
